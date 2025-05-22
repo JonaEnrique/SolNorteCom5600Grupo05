@@ -26,7 +26,7 @@ GO
 
 DROP SCHEMA IF EXISTS Socio;
 GO
-CREATE SCHEMA socio;
+CREATE SCHEMA Socio;
 GO
 
 DROP SCHEMA IF EXISTS ActExtra;
@@ -167,89 +167,89 @@ CREATE TABLE [Com5600G05].[Persona].[Invitado] (
 --		//////		TABLAS CON SCHEMA SOCIO		//////		--
 
 
-DROP TABLE IF EXISTS [Com5600G05].[socio].[EstadoSocio]
+DROP TABLE IF EXISTS [Com5600G05].[Socio].[EstadoSocio]
 GO
-CREATE TABLE [Com5600G05].[socio].[EstadoSocio] (
+CREATE TABLE [Com5600G05].[Socio].[EstadoSocio] (
 	idEstadoSocio	INT IDENTITY,
 	descripcion		VARCHAR(255),
 	CONSTRAINT PK_EstadoSocio PRIMARY KEY (idEstadoSocio)
 );
 
 
-DROP TABLE IF EXISTS [Com5600G05].[socio].[ObraSocial]
+DROP TABLE IF EXISTS [Com5600G05].[Socio].[ObraSocial]
 GO
-CREATE TABLE [Com5600G05].[socio].[ObraSocial] (
+CREATE TABLE [Com5600G05].[Socio].[ObraSocial] (
 	idObraSocial	INT IDENTITY,
 	nombre			VARCHAR(255),
 	CONSTRAINT PK_ObraSocial PRIMARY KEY (idObraSocial)
 );
 
-IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[socio].[TelefonoObraSocial]')
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Socio].[TelefonoObraSocial]')
 BEGIN
-		ALTER TABLE [Com5600G05].[socio].[TelefonoObraSocial] DROP CONSTRAINT FK_ObraSocial;
+		ALTER TABLE [Com5600G05].[Socio].[TelefonoObraSocial] DROP CONSTRAINT FK_ObraSocial;
 
-		DROP TABLE [Com5600G05].[socio].[TelefonoObraSocial];
+		DROP TABLE [Com5600G05].[Socio].[TelefonoObraSocial];
 END
 GO
-CREATE TABLE [Com5600G05].[socio].[TelefonoObraSocial] (
+CREATE TABLE [Com5600G05].[Socio].[TelefonoObraSocial] (
 	idTelefonoObraSocial	INT IDENTITY,
 	telefono				CHAR(20),
 	idObraSocial			INT,
 	CONSTRAINT PK_TelefonoObraSocial PRIMARY KEY (idTelefonoObraSocial),
-	CONSTRAINT FK_ObraSocial		 FOREIGN KEY (idObraSocial) REFERENCES  [Com5600G05].[socio].[ObraSocial] (idObraSocial)
+	CONSTRAINT FK_ObraSocial		 FOREIGN KEY (idObraSocial) REFERENCES  [Com5600G05].[Socio].[ObraSocial] (idObraSocial)
 );
-IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[socio].[Socio]')
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Socio].[Socio]')
 BEGIN
-		ALTER TABLE [Com5600G05].[socio].[Socio] DROP CONSTRAINT FK_Socio;
-		ALTER TABLE [Com5600G05].[socio].[Socio] DROP CONSTRAINT FK_ObraSocial_Socio;
+		ALTER TABLE [Com5600G05].[Socio].[Socio] DROP CONSTRAINT FK_Socio;
+		ALTER TABLE [Com5600G05].[Socio].[Socio] DROP CONSTRAINT FK_ObraSocial_Socio;
 
-		DROP TABLE [Com5600G05].[socio].[Socio];
+		DROP TABLE [Com5600G05].[Socio].[Socio];
 END
 GO
-CREATE TABLE [Com5600G05].[socio].[Socio] (
+CREATE TABLE [Com5600G05].[Socio].[Socio] (
 	idSocio				INT,
 	nroSocio			INT   UNIQUE,
 	idEstadoSocio		INT,
 	idObraSocio			INT,
 	CONSTRAINT PK_Socio			   PRIMARY KEY (idSocio),
 	CONSTRAINT FK_Socio			   FOREIGN KEY (nroSocio)	 REFERENCES [Com5600G05].[Persona].[Persona] (idPersona),
-	CONSTRAINT FK_ObraSocial_Socio FOREIGN KEY (idObraSocio) REFERENCES  [Com5600G05].[socio].[ObraSocial] (idObraSocial)
+	CONSTRAINT FK_ObraSocial_Socio FOREIGN KEY (idObraSocio) REFERENCES  [Com5600G05].[Socio].[ObraSocial] (idObraSocial)
 );
 --vertemasocio
-IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[socio].[GrupoFamiliar]')
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Socio].[GrupoFamiliar]')
 BEGIN
-		ALTER TABLE [Com5600G05].[socio].[GrupoFamiliar] DROP CONSTRAINT FK_SocioTutor;
-		ALTER TABLE [Com5600G05].[socio].[GrupoFamiliar] DROP CONSTRAINT FK_SocioMenor;
+		ALTER TABLE [Com5600G05].[Socio].[GrupoFamiliar] DROP CONSTRAINT FK_SocioTutor;
+		ALTER TABLE [Com5600G05].[Socio].[GrupoFamiliar] DROP CONSTRAINT FK_SocioMenor;
 
-		DROP TABLE [Com5600G05].[socio].[GrupoFamiliar];
+		DROP TABLE [Com5600G05].[Socio].[GrupoFamiliar];
 END
 GO
-CREATE TABLE [Com5600G05].[socio].[GrupoFamiliar] (
+CREATE TABLE [Com5600G05].[Socio].[GrupoFamiliar] (
 	idSocioTutor INT,
 	idSocioMenor INT,
 	idParentesco INT,
 	CONSTRAINT PK_GrupoFamiliar PRIMARY KEY (idSocioTutor, idSocioMenor),
-	CONSTRAINT FK_SocioTutor    FOREIGN KEY (idSocioTutor) REFERENCES [Com5600G05].[socio].[Socio] (idSocio),
-	CONSTRAINT FK_SocioMenor    FOREIGN KEY (idSocioMenor) REFERENCES [Com5600G05].[socio].[Socio] (idSocio)
+	CONSTRAINT FK_SocioTutor    FOREIGN KEY (idSocioTutor) REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
+	CONSTRAINT FK_SocioMenor    FOREIGN KEY (idSocioMenor) REFERENCES [Com5600G05].[Socio].[Socio] (idSocio)
 );
 
-DROP TABLE IF EXISTS [Com5600G05].[socio].[Parentesco]
+DROP TABLE IF EXISTS [Com5600G05].[Socio].[Parentesco]
 GO
 --ok
-CREATE TABLE [Com5600G05].[socio].[Parentesco] (
+CREATE TABLE [Com5600G05].[Socio].[Parentesco] (
 	idParentesco	INT IDENTITY,
 	nombre			VARCHAR(255),
 	CONSTRAINT PK_Parentesco PRIMARY KEY (idParentesco)
 );
-IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[socio].[Tarjeta]')
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Socio].[Tarjeta]')
 BEGIN
-		ALTER TABLE [Com5600G05].[socio].[Tarjeta] DROP CONSTRAINT fkSocioTarjeta;
+		ALTER TABLE [Com5600G05].[Socio].[Tarjeta] DROP CONSTRAINT fkSocioTarjeta;
 
-		DROP TABLE [Com5600G05].[socio].[Tarjeta];
+		DROP TABLE [Com5600G05].[Socio].[Tarjeta];
 END
 GO
 -- le agregue el nro de tarjeta a la tarjeta
-CREATE TABLE [Com5600G05].[socio].[Tarjeta] (
+CREATE TABLE [Com5600G05].[Socio].[Tarjeta] (
 	idTarjeta		 	 INT IDENTITY,
 	nroTarjeta			 CHAR(16),
 	empresa				 VARCHAR(255),
@@ -260,18 +260,18 @@ CREATE TABLE [Com5600G05].[socio].[Tarjeta] (
 	debitoAutomatico	 BIT,
 	idSocio				 INT,
 	CONSTRAINT pkTarjeta			 PRIMARY KEY (idTarjeta),
-	CONSTRAINT fkSocioTarjeta		 FOREIGN KEY (idSocio) REFERENCES [Com5600G05].[socio].[Socio](idSocio)
+	CONSTRAINT fkSocioTarjeta		 FOREIGN KEY (idSocio) REFERENCES [Com5600G05].[Socio].[Socio](idSocio)
 );
 
-IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[socio].[RegistroCuota] ')
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Socio].[RegistroCuota] ')
 BEGIN
-		ALTER TABLE [Com5600G05].[socio].[RegistroCuota]  DROP CONSTRAINT FK_SocioCuota;
+		ALTER TABLE [Com5600G05].[Socio].[RegistroCuota]  DROP CONSTRAINT FK_SocioCuota;
 
-		DROP TABLE [Com5600G05].[socio].[RegistroCuota] ;
+		DROP TABLE [Com5600G05].[Socio].[RegistroCuota] ;
 END
 GO
 -- deje mes y año como esta en el DER pero capas era DATE
-CREATE TABLE [Com5600G05].[socio].[RegistroCuota] (
+CREATE TABLE [Com5600G05].[Socio].[RegistroCuota] (
 	idRegistroCuota			INT IDENTITY,
 	mes						TINYINT,
 	año						TINYINT,
@@ -280,7 +280,7 @@ CREATE TABLE [Com5600G05].[socio].[RegistroCuota] (
 	estado					VARCHAR(255),
 	idSocio					INT,
 	CONSTRAINT PK_Reg_Cuota	 PRIMARY KEY (idRegistroCuota),
-	CONSTRAINT FK_SocioCuota FOREIGN KEY (idSocio)	REFERENCES [Com5600G05].[socio].[Socio](idSocio),
+	CONSTRAINT FK_SocioCuota FOREIGN KEY (idSocio)	REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
 	CONSTRAINT unMesAño			UNIQUE (mes, año)
 );
 
@@ -368,7 +368,7 @@ CREATE TABLE [Com5600G05].[ActDeportiva].[SocioRealizaActividad] (
 	idSocio					INT,
 	idActividadDeportiva	INT,
 	CONSTRAINT PK_SocioRealiza_Act		PRIMARY KEY (idSocio, idActividadDeportiva),
-	CONSTRAINT FK_Act_Deport_Socio		FOREIGN KEY (idSocio)				REFERENCES [Com5600G05].[socio].[Socio](idSocio),
+	CONSTRAINT FK_Act_Deport_Socio		FOREIGN KEY (idSocio)				REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
 	CONSTRAINT FK_Act_Deportiva     	FOREIGN KEY (idActividadDeportiva)	REFERENCES [Com5600G05].[ActDeportiva].[ActividadDeportiva] (idActividadDeportiva)
 );
 IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[ActDeportiva].[RegistroActividadDeportiva]')
@@ -421,7 +421,7 @@ CREATE TABLE   [Com5600G05].[ActExtra].[RegistroReservaSum] (
 	idSocio				 INT,
 	idCostoSum			 INT,
 	CONSTRAINT PK_Reg_ReservaSum		 PRIMARY KEY (idRegistroReservaSum),
-	CONSTRAINT FK_SocioSUM				 FOREIGN KEY (idSocio)    REFERENCES [Com5600G05].[socio].[Socio](idSocio),
+	CONSTRAINT FK_SocioSUM				 FOREIGN KEY (idSocio)    REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
 	CONSTRAINT FK_CostoSUM				 FOREIGN KEY (idCostoSum) REFERENCES [Com5600G05].[ActExtra].[CostoSum](idCostoSum)
 );
 DROP TABLE IF EXISTS [Com5600G05].[ActExtra].[Colonia]
@@ -452,7 +452,7 @@ CREATE TABLE [Com5600G05].[ActExtra].[RegistroColonia] (
 	idSocio					INT,
 	idColonia				INT,
 	CONSTRAINT PK_Reg_Colonia		PRIMARY KEY (idRegistroColonia),
-	CONSTRAINT FK_SocioColonia		FOREIGN KEY (idSocio)   REFERENCES [Com5600G05].[socio].[Socio](idSocio),
+	CONSTRAINT FK_SocioColonia		FOREIGN KEY (idSocio)   REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
 	CONSTRAINT FK_Colonia			FOREIGN KEY (idColonia) REFERENCES [Com5600G05].[ActExtra].[Colonia](idColonia)
 );
 
@@ -521,7 +521,7 @@ CREATE TABLE [Com5600G05].[Pileta].[RegistroUsoPileta] (
 	idCostoPiletaSocio			INT,
 	idJornada					INT,
 	CONSTRAINT PK_Reg_UsoPileta		PRIMARY KEY (idRegistroUsoPileta),
-	CONSTRAINT FK_SocioUsoPileta	FOREIGN KEY (idSocio)				REFERENCES [Com5600G05].[socio].[Socio] (idSocio),
+	CONSTRAINT FK_SocioUsoPileta	FOREIGN KEY (idSocio)				REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
 	CONSTRAINT FK_CostoPiletaSocio	FOREIGN KEY (idCostoPiletaSocio)	REFERENCES [Com5600G05].[Pileta].[CostoPiletaSocio] (idCostoPiletaSocio),
 	CONSTRAINT FK_Jornada			FOREIGN KEY (idJornada)				REFERENCES [Com5600G05].[Pileta].[Jornada] (idJornada)
 );
@@ -540,7 +540,7 @@ CREATE TABLE [Com5600G05].[Pileta].[RegistroInvitacionPileta] (
 	idSocio								INT,
 	idJornada							INT,
 	CONSTRAINT PK_Reg_Invita_Pileta				  PRIMARY KEY (idRegistroInvitacionPileta),
-	CONSTRAINT FK_SocioAnfitrion				  FOREIGN KEY (idSocio)   REFERENCES [Com5600G05].[socio].[Socio] (idSocio),
+	CONSTRAINT FK_SocioAnfitrion				  FOREIGN KEY (idSocio)   REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
 	CONSTRAINT FK_JornadaPorPileta				  FOREIGN KEY (idJornada) REFERENCES [Com5600G05].[Pileta].[Jornada] (idJornada)
 );
 
@@ -557,7 +557,7 @@ CREATE TABLE [Com5600G05].[Pileta].[InvitaASocio] (
 	idCostoPiletaSocio				INT,
 	CONSTRAINT PK_InvitaASocio				PRIMARY KEY (idRegistroInvitacionPileta, idSocio),
 	CONSTRAINT FK_RegistroInvitacionPileta	FOREIGN KEY (idRegistroInvitacionPileta) REFERENCES [Com5600G05].[Pileta].[RegistroInvitacionPileta] (idRegistroInvitacionPileta),
-	CONSTRAINT FK_SocioAnfitionPileta		FOREIGN KEY (idSocio)					 REFERENCES [Com5600G05].[socio].[Socio] (idSocio),
+	CONSTRAINT FK_SocioAnfitionPileta		FOREIGN KEY (idSocio)					 REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
 	CONSTRAINT FK_CostoPiletaPorSocio		FOREIGN KEY (idCostoPiletaSocio)		 REFERENCES [Com5600G05].[Pileta].[CostoPiletaSocio] (idCostoPiletaSocio)
 );
 
@@ -633,10 +633,10 @@ CREATE TABLE [Com5600G05].[Factura].[Factura] (
 	idRegistroCuota				INT,
 	idDetalleFacturaExtra		INT,
 	CONSTRAINT PK_Factura			  PRIMARY KEY (idFactura),
-	CONSTRAINT FK_SocioFactura		  FOREIGN KEY (idSocio)				  REFERENCES [Com5600G05].[socio].[Socio] (idSocio),
+	CONSTRAINT FK_SocioFactura		  FOREIGN KEY (idSocio)				  REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
 	CONSTRAINT FK_InvitadoFactura	  FOREIGN KEY (idInvitado)			  REFERENCES [Com5600G05].[Persona].[Invitado] (idInvitado),
 	CONSTRAINT FK_EstadoFactura		  FOREIGN KEY (idEstadoFactura)		  REFERENCES [Com5600G05].[Factura].[EstadoFactura] (idEstadoFactura),
-	CONSTRAINT FK_Reg_Cuota			  FOREIGN KEY (idRegistroCuota)		  REFERENCES [Com5600G05].[socio].[RegistroCuota] (idRegistroCuota),
+	CONSTRAINT FK_Reg_Cuota			  FOREIGN KEY (idRegistroCuota)		  REFERENCES [Com5600G05].[Socio].[RegistroCuota] (idRegistroCuota),
 	CONSTRAINT FK_DetalleFacturaExtra FOREIGN KEY (idDetalleFacturaExtra) REFERENCES [Com5600G05].[Factura].[DetalleFacturaExtra] (idDetalleFacturaExtra)
 );
 
@@ -671,7 +671,7 @@ CREATE TABLE  [Com5600G05].[ActExtra].[ActividadExtra](
 --		//////*******		TABLAS CON SCHEMA [Pago]	********//////		--
 DROP TABLE IF EXISTS [Com5600G05].[Pago].[FormaPago]
 GO
-CREATE TABLE FormaPago (
+CREATE TABLE [Com5600G05].[Pago].[FormaPago] (
 	idFormaPago		INT IDENTITY,
 	nombre			VARCHAR(255),
 	CONSTRAINT PK_FormaPago PRIMARY KEY (idFormaPago)
@@ -691,7 +691,7 @@ CREATE TABLE [Com5600G05].[Pago].[Pago] (
 	idFormaPago			INT,
 	idFactura			INT,
 	CONSTRAINT PK_Pago		PRIMARY KEY (idPago),
-	CONSTRAINT FK_FormaPago	FOREIGN KEY (idFormaPago) REFERENCES FormaPago (idFormaPago),
+	CONSTRAINT FK_FormaPago	FOREIGN KEY (idFormaPago) REFERENCES [Com5600G05].[Pago].[FormaPago] (idFormaPago),
 	CONSTRAINT FK_Factura	FOREIGN KEY (idFactura)	  REFERENCES [Com5600G05].[Factura].[Factura] (idFactura)
 );
 IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Pago].[Reembolso]')
@@ -726,5 +726,5 @@ CREATE TABLE [Com5600G05].[Pago].[SaldoAFavor] (
 	idSocio			 INT,
 	CONSTRAINT PK_SaldoAFavor PRIMARY KEY (idSaldoAFavor),
 	CONSTRAINT FK_PagoSaldo FOREIGN KEY (idPago) REFERENCES [Com5600G05].[Pago].[Pago] (idPago),
-	CONSTRAINT FK_Socio_Cuenta FOREIGN KEY (idSocio) REFERENCES [Com5600G05].[socio].[Socio] (idSocio)
+	CONSTRAINT FK_Socio_Cuenta FOREIGN KEY (idSocio) REFERENCES [Com5600G05].[Socio].[Socio] (idSocio)
 );
