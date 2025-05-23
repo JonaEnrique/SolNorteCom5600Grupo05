@@ -27,7 +27,6 @@ CREATE OR ALTER PROCEDURE CrearUsuario
 	@telefonoEmergencia INT,
 	@nombreUsuario VARCHAR(255),
 	@contraseña VARCHAR(255),
-	@fechaUltimaRenovacion DATE,
 	@fechaARenovar DATE
 AS
 BEGIN
@@ -60,7 +59,7 @@ BEGIN
 		@idPersonaNueva,
 		@nombreUsuario,
 		@contraseña,
-		@fechaUltimaRenovacion,
+		NULL,
 		@fechaARenovar
 	);
 END
@@ -71,7 +70,6 @@ CREATE PROCEDURE AgregarRolUsuario
 	@dni INT,
 	@nombreUsuario VARCHAR(255),
 	@contraseña VARCHAR(255),
-	@fechaUltimaRenovacion DATE,
 	@fechaARenovar DATE
 AS
 BEGIN
