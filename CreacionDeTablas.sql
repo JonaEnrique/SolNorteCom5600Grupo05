@@ -83,7 +83,6 @@ BEGIN
 		DROP TABLE [Com5600G05].[Usuario].[Rol];
 END
 GO
-
 CREATE TABLE [Com5600G05].[Usuario].[Rol] (
 	idRol		INT IDENTITY,
 	nombreRol	VARCHAR(50),
@@ -134,6 +133,7 @@ CREATE TABLE  [Com5600G05].[Persona].[Persona] (
 	telefono			INT,
 	email				VARCHAR(255),
 	telefonoEmergencia  INT,
+	CONSTRAINT CK_Persona CHECK (dni >= 0 AND dni <= 99999999),
 	CONSTRAINT PK_Persona PRIMARY KEY (idPersona)
 );
 
@@ -180,6 +180,7 @@ DROP TABLE IF EXISTS [Com5600G05].[Socio].[ObraSocial]
 GO
 CREATE TABLE [Com5600G05].[Socio].[ObraSocial] (
 	idObraSocial	INT IDENTITY,
+	legajoSocio		VARCHAR(10),
 	nombre			VARCHAR(255),
 	CONSTRAINT PK_ObraSocial PRIMARY KEY (idObraSocial)
 );
@@ -195,9 +196,11 @@ CREATE TABLE [Com5600G05].[Socio].[TelefonoObraSocial] (
 	idTelefonoObraSocial	INT IDENTITY,
 	telefono				CHAR(20),
 	idObraSocial			INT,
+	CONSTRAINT CK_Telefono CHECK(telefono NOT LIKE '%[^0-9]%' AND (LEN(telefono) = 8 OR LEN(telefono) = 10)),
 	CONSTRAINT PK_TelefonoObraSocial PRIMARY KEY (idTelefonoObraSocial),
 	CONSTRAINT FK_ObraSocial		 FOREIGN KEY (idObraSocial) REFERENCES  [Com5600G05].[Socio].[ObraSocial] (idObraSocial)
 );
+
 IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME ='[Com5600G05].[Socio].[Socio]')
 BEGIN
 		ALTER TABLE [Com5600G05].[Socio].[Socio] DROP CONSTRAINT FK_Socio;
@@ -207,7 +210,7 @@ BEGIN
 END
 GO
 CREATE TABLE [Com5600G05].[Socio].[Socio] (
-	idSocio				INT,
+	idSocio				VARCHAR(8),
 	nroSocio			INT   UNIQUE,
 	idEstadoSocio		INT,
 	idObraSocio			INT,
@@ -225,8 +228,8 @@ BEGIN
 END
 GO
 CREATE TABLE [Com5600G05].[Socio].[GrupoFamiliar] (
-	idSocioTutor INT,
-	idSocioMenor INT,
+	idSocioTutor VARCHAR(8),
+	idSocioMenor VARCHAR(8),
 	idParentesco INT,
 	CONSTRAINT PK_GrupoFamiliar PRIMARY KEY (idSocioTutor, idSocioMenor),
 	CONSTRAINT FK_SocioTutor    FOREIGN KEY (idSocioTutor) REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
@@ -258,7 +261,7 @@ CREATE TABLE [Com5600G05].[Socio].[Tarjeta] (
 	ultimosCuatroDigitos CHAR(4),
 	token				 VARCHAR(255),
 	debitoAutomatico	 BIT,
-	idSocio				 INT,
+	idSocio				 VARCHAR(8),
 	CONSTRAINT pkTarjeta			 PRIMARY KEY (idTarjeta),
 	CONSTRAINT fkSocioTarjeta		 FOREIGN KEY (idSocio) REFERENCES [Com5600G05].[Socio].[Socio](idSocio)
 );
@@ -270,7 +273,7 @@ BEGIN
 		DROP TABLE [Com5600G05].[Socio].[RegistroCuota] ;
 END
 GO
--- deje mes y año como esta en el DER pero capas era DATE
+-- deje mes y año como esta en el DER pero capaz era DATE
 CREATE TABLE [Com5600G05].[Socio].[RegistroCuota] (
 	idRegistroCuota			INT IDENTITY,
 	mes						TINYINT,
@@ -278,7 +281,7 @@ CREATE TABLE [Com5600G05].[Socio].[RegistroCuota] (
 	monto					DECIMAL(19, 2),
 	fechaVencimiento		DATE,
 	estado					VARCHAR(255),
-	idSocio					INT,
+	idSocio					VARCHAR(8),
 	CONSTRAINT PK_Reg_Cuota	 PRIMARY KEY (idRegistroCuota),
 	CONSTRAINT FK_SocioCuota FOREIGN KEY (idSocio)	REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
 	CONSTRAINT unMesAño			UNIQUE (mes, año)
@@ -365,7 +368,7 @@ BEGIN
 		DROP TABLE [Com5600G05].[ActDeportiva].[SocioRealizaActividad];
 END
 CREATE TABLE [Com5600G05].[ActDeportiva].[SocioRealizaActividad] (
-	idSocio					INT,
+	idSocio					VARCHAR(8),
 	idActividadDeportiva	INT,
 	CONSTRAINT PK_SocioRealiza_Act		PRIMARY KEY (idSocio, idActividadDeportiva),
 	CONSTRAINT FK_Act_Deport_Socio		FOREIGN KEY (idSocio)				REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
@@ -384,7 +387,7 @@ CREATE TABLE [Com5600G05].[ActDeportiva].[RegistroActividadDeportiva] (
 	monto							DECIMAL(19, 2),
 	fechaVencimiento				DATE,
 	estado							VARCHAR(255),
-	idSocio							INT,
+	idSocio							VARCHAR(8),
 	idActividadDeportiva			INT,
 	CONSTRAINT PK_RegistroAct_Deportiva		PRIMARY KEY (idRegistroActividadDeportiva),
 	CONSTRAINT FK_SocioRealiza_Act			FOREIGN KEY (idSocio, idActividadDeportiva)		REFERENCES [Com5600G05].[ActDeportiva].[SocioRealizaActividad](idSocio, idActividadDeportiva)
@@ -418,7 +421,7 @@ CREATE TABLE   [Com5600G05].[ActExtra].[RegistroReservaSum] (
 	horaDesde			 TIME(0),
 	horaHasta			 TIME(0),
 	estado				 VARCHAR(255),
-	idSocio				 INT,
+	idSocio				 VARCHAR(8),
 	idCostoSum			 INT,
 	CONSTRAINT PK_Reg_ReservaSum		 PRIMARY KEY (idRegistroReservaSum),
 	CONSTRAINT FK_SocioSUM				 FOREIGN KEY (idSocio)    REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
@@ -449,7 +452,7 @@ CREATE TABLE [Com5600G05].[ActExtra].[RegistroColonia] (
 	monto					DECIMAL(19, 2),
 	fechaVencimiento		DATE,
 	estado					VARCHAR(255),
-	idSocio					INT,
+	idSocio					VARCHAR(8),
 	idColonia				INT,
 	CONSTRAINT PK_Reg_Colonia		PRIMARY KEY (idRegistroColonia),
 	CONSTRAINT FK_SocioColonia		FOREIGN KEY (idSocio)   REFERENCES [Com5600G05].[Socio].[Socio](idSocio),
@@ -517,7 +520,7 @@ CREATE TABLE [Com5600G05].[Pileta].[RegistroUsoPileta] (
 	monto						DECIMAL(19, 2),
 	estado						VARCHAR(255),
 	fechaVencimiento			DATE,
-	idSocio						INT,
+	idSocio						VARCHAR(8),
 	idCostoPiletaSocio			INT,
 	idJornada					INT,
 	CONSTRAINT PK_Reg_UsoPileta		PRIMARY KEY (idRegistroUsoPileta),
@@ -537,7 +540,7 @@ CREATE TABLE [Com5600G05].[Pileta].[RegistroInvitacionPileta] (
 	idRegistroInvitacionPileta			INT IDENTITY,
 	fecha								DATE,
 	montoTotal							DECIMAL(19, 2),
-	idSocio								INT,
+	idSocio								VARCHAR(8),
 	idJornada							INT,
 	CONSTRAINT PK_Reg_Invita_Pileta				  PRIMARY KEY (idRegistroInvitacionPileta),
 	CONSTRAINT FK_SocioAnfitrion				  FOREIGN KEY (idSocio)   REFERENCES [Com5600G05].[Socio].[Socio] (idSocio),
@@ -553,7 +556,7 @@ BEGIN
 END
 CREATE TABLE [Com5600G05].[Pileta].[InvitaASocio] (
 	idRegistroInvitacionPileta		INT,
-	idSocio							INT,
+	idSocio							VARCHAR(8),
 	idCostoPiletaSocio				INT,
 	CONSTRAINT PK_InvitaASocio				PRIMARY KEY (idRegistroInvitacionPileta, idSocio),
 	CONSTRAINT FK_RegistroInvitacionPileta	FOREIGN KEY (idRegistroInvitacionPileta) REFERENCES [Com5600G05].[Pileta].[RegistroInvitacionPileta] (idRegistroInvitacionPileta),
@@ -627,7 +630,7 @@ CREATE TABLE [Com5600G05].[Factura].[Factura] (
 	cuit						INT,
 	emailEmisor					VARCHAR(200),
 	montoTotal					DECIMAL(19, 2),
-	idSocio						INT,
+	idSocio						VARCHAR(8),
 	idInvitado					INT,
 	idEstadoFactura				INT,
 	idRegistroCuota				INT,
@@ -723,7 +726,7 @@ CREATE TABLE [Com5600G05].[Pago].[SaldoAFavor] (
 	fechaGeneracion  DATE,
 	motivo			 VARCHAR(255),
 	idPago			 INT,
-	idSocio			 INT,
+	idSocio			 VARCHAR(8),
 	CONSTRAINT PK_SaldoAFavor PRIMARY KEY (idSaldoAFavor),
 	CONSTRAINT FK_PagoSaldo FOREIGN KEY (idPago) REFERENCES [Com5600G05].[Pago].[Pago] (idPago),
 	CONSTRAINT FK_Socio_Cuenta FOREIGN KEY (idSocio) REFERENCES [Com5600G05].[Socio].[Socio] (idSocio)
