@@ -97,7 +97,7 @@
 - <span style="color:yellow">idActExtra (FK)</span>
 
 ## NotaCredito
-- idEstado
+- idEstado(PK)
 - Descripcion
 - NroComprobante
 - fechaEmision
@@ -149,6 +149,7 @@
 - nombre
 
 ## costo actividad deportiva
+- idCostoAct (PK)
 - precio
 - fechaVigencia
 - descripcion
@@ -216,7 +217,7 @@
 
 # se podria poner tarjeta para el devito autopmatico y una entidad registro cuota para agilizar la busqueda del informe 6 de deudores morozos
 ## RegistroCuotas
-- <span style="color:red">idCuota (FK)</span>
+- <span style="color:red">idCuota (PK)</span>
 - monto
 - fecha
 - estado
