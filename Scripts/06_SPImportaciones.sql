@@ -8,18 +8,17 @@ CREATE OR ALTER PROCEDURE importarJornadas
 AS
 BEGIN
 
-	CREATE TABLE #tempDatosCsv(
+	CREATE TABLE #tempDatosCsv (
 		fecha        CHAR(17),
-		temperatura  CHAR(5),
-		mmLluvia     CHAR(5),
-		humedad      CHAR(2),
-		viento       CHAR(5)
+		temperatura  DECIMAL(4,1),   
+		mmLluvia     DECIMAL(5,2),
+		humedad      TINYINT,         
+		viento       DECIMAL(5,1)    
 	);
 	BEGIN TRY
-		
 
 		DECLARE @sqlBulk VARCHAR(256);
-
+		--DECLARE @rutaCompletaArchivo VARCHAR(256) = 'C:\Temp\open-meteo-buenosaires_2025.csv';
 		SET @sqlBulk = '
 		BULK INSERT #tempDatosCsv
 		FROM ''' + REPLACE(@rutaCompletaArchivo, '''', '''''') + '''
@@ -29,25 +28,26 @@ BEGIN
 			FIRSTROW        = 6
 		);
 		';
-		EXEC sp_executesql @sqlBulk;
+		EXEC (@sqlBulk);
 
-		UPDATE #tempDatosCsv
-		SET
-		  fecha = LEFT(TRIM(REPLACE(REPLACE(fecha, CHAR(10), ''), CHAR(13), '')), 10) --Quita todos los LF y CL que haya.
-		WHERE ISDATE(LEFT(TRIM(REPLACE(REPLACE(fecha, CHAR(13), ''), CHAR(10), '')), 10)) = 1;
-
-		WITH lluviaPorDia AS (
+		WITH LluviaValida AS (
 		  SELECT
-			CAST(fecha AS DATE) AS fechaDia,
-			SUM(CAST(mmLluvia AS DECIMAL(9,2))) AS cantidadMmEnElDia
+			TRY_CONVERT(DATE, LEFT(fecha, 10), 126) AS fechaDia,
+			TRY_CONVERT(DECIMAL(5,2), mmLluvia) AS mmLluvia
 		  FROM #tempDatosCsv
-		  WHERE ISDATE(fecha) = 1	--Asegurar que la fecha sea valida.
-		  GROUP BY CAST(fecha AS DATE)
+		),  
+		LluviaPorDia AS (
+		  SELECT
+			FechaDia,
+			SUM(mmLluvia) AS TotalMmLluvia
+		  FROM LluviaValida
+		  WHERE FechaDia IS NOT NULL
+		  GROUP BY FechaDia
 		)
-		INSERT INTO Jornada (huboLluvia, fecha)
+		INSERT INTO Jornada (fecha, huboLluvia)
 		SELECT
-		  CASE WHEN cantidadMmEnElDia > 0 THEN 1 ELSE 0 END,
-		  fechaDia
+		  fechaDia,
+		  CASE WHEN TotalMmLluvia > 0 THEN 1 ELSE 0 END
 		FROM lluviaPorDia d
 		WHERE NOT EXISTS (
 		  SELECT 1 FROM Jornada j
@@ -57,17 +57,17 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 
-
-        DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
-        RAISERROR('Error en importarJornadas: %s', 16, 1, @ErrorMsg);
+        DECLARE @ErrorMensaje VARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Error en importarJornadas: %s', 16, 1, @ErrorMensaje);
        
     END CATCH
 
 	DROP TABLE #tempDatosCsv;
 END;
-
+GO
 
 -----------------------------tarifas---------------------------------------
+
 
 
 
@@ -75,51 +75,50 @@ CREATE OR ALTER PROCEDURE importarTarifas
 	@rutaCompletaArchivo VARCHAR(260)
 AS
 BEGIN
-	DECLARE @tempTarifasActividades TABLE (
-		nombre VARCHAR(30) NOT NULL,
-		precio DECIMAL(10,2) NOT NULL,
-		fechaVigencia DATE NOT NULL
-	);
 
-	DECLARE @tempTarifasCategoria TABLE (
-		nombre VARCHAR(30) NOT NULL,
-		precio DECIMAL(10,2) NOT NULL,
-		fechaVigencia DATE NOT NULL
-	);
-
-	DECLARE @tempTarifasPileta TABLE (
+	CREATE TABLE #tempTarifasActividades (
+		nombre VARCHAR(30) COLLATE Modern_Spanish_CI_AS,
 		precio DECIMAL(10,2),
-		fechaVigencia DATE NOT NULL,
-		tipoCliente VARCHAR(10),
-		tipoEdad VARCHAR(10),
-		tipoDuracion VARCHAR(10),
+		fechaVigencia DATE
+	);
+
+	CREATE TABLE #tempTarifasCategoria (
+		nombre VARCHAR(30) COLLATE Modern_Spanish_CI_AS,
+		precio DECIMAL(10,2),
+		fechaVigencia DATE
+	);
+
+	CREATE TABLE #tempTarifasPileta (
+		precio DECIMAL(10,2),
+		fechaVigencia DATE,
+		tipoCliente VARCHAR(10) COLLATE Modern_Spanish_CI_AS,
+		tipoEdad VARCHAR(10) COLLATE Modern_Spanish_CI_AS,
+		tipoDuracion VARCHAR(10) COLLATE Modern_Spanish_CI_AS,
 		ordenCarga INT
 	);
-
-	DECLARE @trancountInicio INT = @@TRANCOUNT;
-
+	SET XACT_ABORT ON;    -- esto hace rollback automático ante casi cualquier error
 	BEGIN TRY
 		BEGIN TRANSACTION;
 
 
 		-----------------Actividades Deportivas--------------------
 		DECLARE @sqlActividad VARCHAR(512) = '
-		INSERT INTO @tempTarifasActividades(nombre, precio, fechaVigencia) 
+		INSERT INTO #tempTarifasActividades(nombre, precio, fechaVigencia) 
 		SELECT Actividad, [Valor por mes], CAST([Vigente Hasta] AS date)
 		FROM OPENROWSET(
 			''Microsoft.ACE.OLEDB.16.0'',
 			''Excel 12.0;HDR=YES;IMEX=1;Database=' + @rutaCompletaArchivo + ''',
 			''SELECT * FROM [Tarifas$B2:D8]''
 		);';
-		exec sp_executesql @sqlActividad;
+		EXEC (@sqlActividad);
 
 		-- Actualizar si un precio ha cambiado y tiene la misma fecha.
 
 		UPDATE c
 		SET c.precio = t.precio
 		FROM CostoActividadDeportiva c
-		JOIN @tempTarifasActividades t ON c.fechaVigencia = t.fechaVigencia
-		JOIN ActividadDeportiva a ON a.nombre = t.nombre COLLATE Modern_Spanish_CI_AS
+		JOIN #tempTarifasActividades t ON c.fechaVigencia = t.fechaVigencia
+		JOIN ActividadDeportiva a ON a.nombre = t.nombre
 		WHERE c.idActividadDeportiva = a.idActividadDeportiva
 		  AND c.precio <> t.precio;
 
@@ -130,8 +129,8 @@ BEGIN
 			t.fechaVigencia,
 			t.precio,
 			a.idActividadDeportiva
-		FROM @tempTarifasActividades t
-		JOIN ActividadDeportiva a ON a.nombre = t.nombre COLLATE Modern_Spanish_CI_AS
+		FROM #tempTarifasActividades t
+		JOIN ActividadDeportiva a ON a.nombre = t.nombre
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM CostoActividadDeportiva c
@@ -142,22 +141,22 @@ BEGIN
 		--------------------- Categorias ----------------------
 
 		DECLARE @sqlCategoria VARCHAR(512) = '
-		INSERT INTO @tempTarifasCategoria(nombre, precio, fechaVigencia) 
+		INSERT INTO #tempTarifasCategoria(nombre, precio, fechaVigencia) 
 		SELECT [Categoria socio], [Valor cuota], CAST([Vigente Hasta] AS date)
 		FROM OPENROWSET(
 			''Microsoft.ACE.OLEDB.16.0'',
 			''Excel 12.0;HDR=YES;IMEX=1;Database=' + @rutaCompletaArchivo + ''',
 			''SELECT * FROM [Tarifas$B10:D13]''
 		);';
-		exec sp_executesql @sqlCategoria;
+		EXEC (@sqlCategoria);
 
 		-- Actualizar si un precio ha cambiado y tiene la misma fecha.
 
 		UPDATE cc
 		SET cc.precio = t.precio
 		FROM CostoCategoria cc
-		JOIN @tempTarifasCategoria t ON t.fechaVigencia = cc.fechaVigencia
-		JOIN Categoria c ON c.nombre = t.nombre COLLATE Modern_Spanish_CI_AS
+		JOIN #tempTarifasCategoria t ON t.fechaVigencia = cc.fechaVigencia
+		JOIN Categoria c ON c.nombre = t.nombre
 		WHERE cc.idCategoria = c.idCategoria
 		  AND cc.precio <> t.precio;
 
@@ -168,8 +167,8 @@ BEGIN
 			t.fechaVigencia,
 			t.precio,
 			c.idCategoria
-		FROM @tempTarifasCategoria t
-		JOIN Categoria c ON c.nombre = t.nombre COLLATE Modern_Spanish_CI_AS
+		FROM #tempTarifasCategoria t
+		JOIN Categoria c ON c.nombre = t.nombre
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM CostoCategoria cc
@@ -180,46 +179,46 @@ BEGIN
 		---------------------Uso Pileta--------------------------
 
 		DECLARE @sqlPiletaSocios VARCHAR(512) = '
-		INSERT INTO @tempTarifasPileta(precio, fechaVigencia, ordenCarga)
+		INSERT INTO #tempTarifasPileta(precio, fechaVigencia, ordenCarga)
 		SELECT Socios, CAST([Vigente Hasta] AS date), ROW_NUMBER() OVER (ORDER BY (SELECT NULL))
 		FROM OPENROWSET(
 			''Microsoft.ACE.OLEDB.16.0'',
 			''Excel 12.0;HDR=YES;IMEX=1;Database=' + @rutaCompletaArchivo + ''',
 			''SELECT * FROM [Tarifas$D16:F22]''
 		);';
-		exec sp_executesql @sqlPiletaSocios;
+		EXEC (@sqlPiletaSocios);
 
 		DECLARE @sqlPiletaInvitados VARCHAR(512) = '
-		INSERT INTO @tempTarifasPileta(precio, fechaVigencia, ordenCarga)
+		INSERT INTO #tempTarifasPileta(precio, fechaVigencia, ordenCarga)
 		SELECT Invitados, CAST([Vigente Hasta] AS date), ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) + 6
 		FROM OPENROWSET(
 			''Microsoft.ACE.OLEDB.16.0'',
 			''Excel 12.0;HDR=YES;IMEX=1;Database=' + @rutaCompletaArchivo + ''',
 			''SELECT * FROM [Tarifas$E16:F18]''
 		);';
-		exec sp_executesql @sqlPiletaInvitados;
-
+		EXEC (@sqlPiletaInvitados);
+		
 		UPDATE t
 		SET 
 			tipoCliente = CASE 
-						WHEN ordenCarga IN (1,2,3,4,5,6) THEN 'Socio'
-						WHEN ordenCarga IN (7,8) THEN 'Invitado'
+						WHEN ordenCarga IN (1,2,3,4,5,6) THEN 'Socio' COLLATE Modern_Spanish_CI_AS
+						WHEN ordenCarga IN (7,8) THEN 'Invitado' COLLATE Modern_Spanish_CI_AS
 					  END,
 			tipoEdad = CASE 
-					WHEN ordenCarga IN (1,3,5,7) THEN 'Adulto'
-					WHEN ordenCarga IN (2,4,6,8) THEN 'Menor'
+					WHEN ordenCarga IN (1,3,5,7) THEN 'Adulto' COLLATE Modern_Spanish_CI_AS
+					WHEN ordenCarga IN (2,4,6,8) THEN 'Menor' COLLATE Modern_Spanish_CI_AS
 				   END,
 			tipoDuracion = CASE 
-						WHEN ordenCarga IN (1,2,7,8) THEN 'Día'
-						WHEN ordenCarga IN (3,4) THEN 'Temporada'
-						WHEN ordenCarga IN (5,6) THEN 'Mes'
+						WHEN ordenCarga IN (1,2,7,8) THEN 'Día' COLLATE Modern_Spanish_CI_AS
+						WHEN ordenCarga IN (3,4) THEN 'Temporada' COLLATE Modern_Spanish_CI_AS 
+						WHEN ordenCarga IN (5,6) THEN 'Mes' COLLATE Modern_Spanish_CI_AS
 					  END
-		FROM @tempTarifasPileta t;
+		FROM #tempTarifasPileta t;
 
 
 
 		DECLARE @idUsoPileta INT;
-		SELECT @idUsoPileta = idTipoActividadExtra FROM TipoActividadExtra WHERE descripcion = 'UsoPileta';
+		SELECT @idUsoPileta = idTipoActividadExtra FROM TipoActividadExtra WHERE descripcion = 'UsoPileta' ;
 
 		
 		-- Actualizar si un precio ha cambiado y tiene la misma fecha.
@@ -227,7 +226,7 @@ BEGIN
 		UPDATE t
 		SET t.precio = temp.precio
 		FROM Tarifa t
-		JOIN @tempTarifasPileta temp
+		JOIN #tempTarifasPileta temp
 		  ON t.fechaVigencia = temp.fechaVigencia
 		 AND t.tipoCliente   = temp.tipoCliente
 		 AND t.tipoEdad      = temp.tipoEdad
@@ -246,7 +245,7 @@ BEGIN
 			temp.tipoDuracion,
 			temp.tipoEdad,
 			@idUsoPileta
-		FROM @tempTarifasPileta temp
+		FROM #tempTarifasPileta temp
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM Tarifa t
@@ -261,18 +260,23 @@ BEGIN
 		COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-		WHILE @@TRANCOUNT > @trancountInicio
-			ROLLBACK TRANSACTION;
-		DECLARE @ErrorMsg VARCHAR(4000) = ERROR_MESSAGE();
-		RAISERROR('Error en importarTarifas: %s', 16, 1, @ErrorMsg);
+		IF @@TRANCOUNT > 0
+		  ROLLBACK TRANSACTION;
+		DECLARE @ErrorMensaje VARCHAR(4000) = ERROR_MESSAGE();
+		RAISERROR('Error en importarTarifas: %s', 16, 1, @ErrorMensaje);
 	END CATCH
 
-	WHILE @@TRANCOUNT > @trancountInicio
-			ROLLBACK TRANSACTION;
+	IF @@TRANCOUNT > 0
+	  ROLLBACK TRANSACTION;
 
+	 DROP TABLE #tempTarifasActividades;
+	 DROP TABLE #tempTarifasCategoria;
+	 DROP TABLE #tempTarifasPileta;
 END;
 
+
 -----------------------socios--------------------------------
+
 
 
 
@@ -296,14 +300,13 @@ BEGIN
 	);
 
 	CREATE TABLE #NuevosSocios (
-		idPersona INT,
+		idPersona INT PRIMARY KEY,
 		dni VARCHAR(15) COLLATE Modern_Spanish_CI_AS,
 		nombre VARCHAR(50) COLLATE Modern_Spanish_CI_AS,
 		apellido VARCHAR(50) COLLATE Modern_Spanish_CI_AS,
 	);
 
-	DECLARE @trancountInicio INT = @@TRANCOUNT;
-
+	SET XACT_ABORT ON;    -- esto hace rollback automático ante casi cualquier error
 	BEGIN TRY
 		BEGIN TRANSACTION;
 
@@ -317,7 +320,7 @@ BEGIN
 		  TRIM([ apellido]), 
 		  CAST([ DNI] AS VARCHAR(15)), 
 		  [ email personal], 
-		  TRY_CONVERT(DATE, [ fecha de nacimiento], 103)
+		  TRY_CONVERT(DATE, [ fecha de nacimiento], 103),
 		  CAST(CAST([ teléfono de contacto] AS INT) AS VARCHAR(20)),
 		  CAST(CAST([ teléfono de contacto emergencia] AS INT) AS VARCHAR(20)),
 		  TRIM([ Nombre de la obra social o prepaga]), 
@@ -397,19 +400,18 @@ BEGIN
 		COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-		WHILE @@TRANCOUNT > @trancountInicio
+		IF @@TRANCOUNT > 0
 			ROLLBACK TRANSACTION;
-		DECLARE @ErrorMsg VARCHAR(4000) = ERROR_MESSAGE();
-		RAISERROR('Error en importarSocios: %s', 16, 1, @ErrorMsg);
+		DECLARE @ErrorMensaje VARCHAR(4000) = ERROR_MESSAGE();
+		RAISERROR('Error en importarSocios: %s', 16, 1, @ErrorMensaje);
 	END CATCH
 
-	WHILE @@TRANCOUNT > @trancountInicio		--Para errores que el CATCH no detecta como COLLATE's incompatibles.
-			ROLLBACK TRANSACTION;
+	IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
 
 	DROP TABLE #tempDatosPersona;
 	DROP TABLE #nuevosSocios;
 END;
-
 
 
 
@@ -449,11 +451,11 @@ BEGIN
 		fechaNacNueva DATE
 	);
 
-	DECLARE @trancountInicio INT = @@TRANCOUNT
+	SET XACT_ABORT ON;    -- esto hace rollback automático ante casi cualquier error
 	BEGIN TRY
 		BEGIN TRANSACTION
 
-		DECLARE @sql VARCHAR(512);
+		DECLARE @sql VARCHAR(1024);
 
 		SET @sql = '
 		INSERT INTO #tempDatosPersonaMenor
@@ -464,7 +466,7 @@ BEGIN
 		  TRIM([ apellido]), 
 		  CAST([ DNI] AS VARCHAR(15)), 
 		  [ email personal], 
-		  TRY_CONVERT(DATE, [ fecha de nacimiento], 103)
+		  TRY_CONVERT(DATE, [ fecha de nacimiento], 103),
 		  [ teléfono de contacto],
 		  CAST([ teléfono de contacto emergencia] AS VARCHAR(20)),
 		  TRIM([ Nombre de la obra social o prepaga]), 
@@ -603,14 +605,14 @@ BEGIN
 		COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-		WHILE @@TRANCOUNT > @trancountInicio
+		IF @@TRANCOUNT > 0
 			ROLLBACK TRANSACTION;
-		DECLARE @ErrorMsg VARCHAR(4000) = ERROR_MESSAGE();
-		RAISERROR('Error en importarSociosMenores: %s', 16, 1, @ErrorMsg);
+		DECLARE @ErrorMensaje VARCHAR(4000) = ERROR_MESSAGE();
+		RAISERROR('Error en importarSociosMenores: %s', 16, 1, @ErrorMensaje);
 	END CATCH
 
-	WHILE @@TRANCOUNT > @trancountInicio
-			ROLLBACK TRANSACTION;
+	IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION;
 
 	DROP TABLE #tempDatosPersonaMenor
 	DROP TABLE #NuevosSocios
@@ -631,26 +633,26 @@ BEGIN
 		profesor VARCHAR(100) COLLATE Modern_Spanish_CI_AS
 	);
 
-	DECLARE @trancountInicio INT = @@TRANCOUNT;
 
+	SET XACT_ABORT ON;    -- esto hace rollback automático ante casi cualquier error
 	BEGIN TRY		
 		BEGIN TRANSACTION;
 
-		DECLARE @sql VARCHAR(512) = '
+		DECLARE @sql VARCHAR(1024) = '
         INSERT INTO #tempAsistencia(nroSocio, actividad, fecha, asistencia, profesor)
         SELECT
           [Nro de Socio],
           [Actividad],
-          TRY_CONVERT(DATE, [Fecha], 103),     -- dd/mm/yyyy
+          TRY_CONVERT(DATE, [fecha de asistencia], 103),     -- dd/mm/yyyy
           [Asistencia],
           [Profesor]
         FROM OPENROWSET(
           ''Microsoft.ACE.OLEDB.16.0'',
           ''Excel 12.0;HDR=YES;IMEX=1;Database=' + @rutaCompletaArchivo + ''',
-          ''SELECT * FROM [Asistencias$]''
+          ''SELECT * FROM [presentismo_actividades$]''
         ) AS datosExcel;
         ';
-        EXEC sp_executesql @sql;
+        EXEC (@sql)
 
 
 		INSERT INTO Clase (fecha, idActividadDeportiva, profesor)
@@ -681,20 +683,19 @@ BEGIN
 		COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-		WHILE @@TRANCOUNT > @trancountInicio
+		IF @@TRANCOUNT > 0
 			ROLLBACK TRANSACTION;
-		DECLARE @ErrorMsg VARCHAR(4000) = ERROR_MESSAGE();
-		RAISERROR('Error en importarAsistencias: %s', 16, 1, @ErrorMsg);
+		DECLARE @ErrorMensaje VARCHAR(4000) = ERROR_MESSAGE();
+		RAISERROR('Error en importarAsistencias: %s', 16, 1, @ErrorMensaje);
 	END CATCH
 
-	WHILE @@TRANCOUNT > @trancountInicio
+	IF @@TRANCOUNT > 0
 		ROLLBACK TRANSACTION;
 	DROP TABLE #tempAsistencia;
 END;
+GO
 
-
-
-
+EXEC importarAsistencias @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx'
 
 
 

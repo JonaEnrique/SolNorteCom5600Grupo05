@@ -11,17 +11,23 @@ GO
 
 --------------------------------------Creacion de tablas para que funcionen los SP--------------------------------------------
 
+CREATE TABLE Jornada(
+	fecha DATE PRIMARY KEY,
+	huboLluvia BIT NOT NULL
+);
+GO
+
 
 CREATE TABLE ActividadDeportiva(
 	idActividadDeportiva INT PRIMARY KEY IDENTITY(1,1),
-	nombre VARCHAR(30) NOT NULL UNIQUE
+	nombre VARCHAR(30) COLLATE Modern_Spanish_CI_AS NOT NULL UNIQUE
 
 );
 GO
 
 CREATE TABLE Categoria(
 	idCategoria INT PRIMARY KEY IDENTITY(1,1),
-	nombre VARCHAR(30) NOT NULL UNIQUE,
+	nombre VARCHAR(30) COLLATE Modern_Spanish_CI_AS NOT NULL UNIQUE,
 	edadMinima TINYINT,
 	edadMaxima TINYINT
 );
@@ -55,9 +61,10 @@ GO
 
 CREATE TABLE TipoActividadExtra(
 	idTipoActividadExtra INT PRIMARY KEY IDENTITY(1,1),
-	descripcion VARCHAR(30) NOT NULL UNIQUE
+	descripcion VARCHAR(30) COLLATE Modern_Spanish_CI_AS NOT NULL UNIQUE
 );
 GO
+
 
 CREATE TABLE Tarifa(
 
@@ -65,9 +72,9 @@ CREATE TABLE Tarifa(
 	fechaVigencia DATE NOT NULL,
 	precio DECIMAL(10,2) NOT NULL,
 
-	tipoCliente VARCHAR(10) CHECK (TipoCliente IN ('Socio','Invitado')),
-	tipoDuracion VARCHAR(10) CHECK (tipoDuracion IN ('Día','Mes','Temporada')),
-	tipoEdad VARCHAR(10) CHECK (tipoEdad IN ('Adulto','Menor')),
+	tipoCliente VARCHAR(10) COLLATE Modern_Spanish_CI_AS CHECK (TipoCliente IN ('Socio','Invitado')),
+	tipoDuracion VARCHAR(10) COLLATE Modern_Spanish_CI_AS CHECK (tipoDuracion IN ('Día','Mes','Temporada')),
+	tipoEdad VARCHAR(10) COLLATE Modern_Spanish_CI_AS CHECK (tipoEdad IN ('Adulto','Menor')),
 	idTipoActividadExtra INT NOT NULL,
 
 
@@ -75,12 +82,7 @@ CREATE TABLE Tarifa(
 );
 GO
 
-CREATE TABLE Jornada(
-	idJornada INT PRIMARY KEY,
-	fecha DATE UNIQUE NOT NULL,
-	huboLluvia BIT NOT NULL,
-)
-GO
+
 
 IF NOT EXISTS (
     SELECT 1
@@ -148,6 +150,21 @@ CREATE TABLE FormaPago(
 );
 GO
 
+
+CREATE TABLE Cuota (
+    idCuota			INT PRIMARY KEY IDENTITY(1,1),
+    idSocio			INT NOT NULL,
+	periodo			DATE NOT NULL,
+    	
+    montoCuota		DECIMAL(10,2) NOT NULL,
+    estado			VARCHAR(20) NOT NULL CHECK(estado IN ('Pendiente','Pagada','Pagada Vencida', 'Cancelada')) DEFAULT 'Pendiente',
+        
+		
+    CONSTRAINT FK_Cuota_Socio			FOREIGN KEY (idSocio) REFERENCES Socio(idSocio),
+
+	CHECK (montoCuota >= 0),
+);
+
 CREATE TABLE Clase(
 	idClase INT PRIMARY KEY IDENTITY(1,1),
 	fecha DATE NOT NULL,
@@ -174,6 +191,92 @@ CREATE TABLE Asiste(
 	CONSTRAINT UQ_Asiste_ClaseSocio UNIQUE(idClase, idSocio)
 );
 GO
+
+
+
+CREATE TABLE Factura(
+
+	idFactura INT PRIMARY KEY IDENTITY(1,1),
+
+	nroComprobante AS RIGHT('00000000' + CONVERT(VARCHAR(8), idFactura), 8 ) PERSISTED,
+
+	puntoDeVenta CHAR(4) NOT NULL DEFAULT '0001',
+	tipoFactura CHAR(1) NOT NULL,
+	concepto VARCHAR(100) NOT NULL,
+	fechaEmision DATE NOT NULL,
+
+	cae CHAR(14) DEFAULT NULL,
+	caeVTO DATE DEFAULT NULL,
+	
+	totalFactura DECIMAL(10,2), --IVA incluido o no.
+
+	--condicionVenta VARCHAR(30) NOT NULL, --Contado/Debito Automatico/Cta Cte/..
+	
+	fechaRecargo AS DATEADD(DAY, 5, fechaEmision)  PERSISTED,
+	fechaVencimiento AS DATEADD(DAY, 10, fechaEmision)  PERSISTED,
+
+	estado VARCHAR(15) NOT NULL CHECK (estado IN ('Pendiente', 'Pagada','Pagada Vencida', 'Cancelada')) DEFAULT 'Pendiente',
+
+	idSocio INT NOT NULL,
+	idPago INT,
+
+	CONSTRAINT FK_Factura_Socio FOREIGN KEY (idSocio) REFERENCES Socio(idSocio),
+	CONSTRAINT FK_Factura_Pago FOREIGN KEY (idPago) REFERENCES Pago(idPago),
+
+	CHECK (tipoFactura IN ('A','B','C','E','M')),
+	CHECK (tipoFactura IN ('A','M') OR tipoFactura IN ('B','C','E')),
+	CHECK ((cae IS NULL  AND caeVto IS NULL) OR (cae IS NOT NULL AND caeVto IS NOT NULL)),
+	CHECK (totalFactura >= 0)
+);
+GO
+
+
+
+
+CREATE TABLE ItemFactura(
+	idItemFactura INT PRIMARY KEY IDENTITY(1,1),
+	descripcion VARCHAR(50) NOT NULL,
+
+	importeBase DECIMAL(10,2) NOT NULL, 
+    descuentoPorcentaje TINYINT DEFAULT 0,
+    importeNeto AS (importeBase * ((1 - descuentoPorcentaje)/100)) PERSISTED, 
+
+	alicuotaIVA DECIMAL(4,2),                 -- Ej. 21, 10.5; NULL en B/C
+	ivaImporte AS (CASE
+						WHEN alicuotaIVA IS NULL THEN 0
+						ELSE importeBase * (1 - descuentoPorcentaje/100.0) * alicuotaIVA / 100.0
+					END) PERSISTED,
+	totalItem AS (importeBase * (1 - descuentoPorcentaje/100.0) + 
+					CASE
+						WHEN alicuotaIVA IS NULL THEN 0
+						ELSE importeBase * (1 - descuentoPorcentaje/100.0) * alicuotaIVA / 100.0
+					END) PERSISTED,
+	
+	idFactura INT NOT NULL,
+
+	CONSTRAINT FK_ItemFactura_Factura FOREIGN KEY (idFactura) REFERENCES Factura(idFactura),
+
+	CHECK (importeBase >= 0),
+    CHECK (descuentoPorcentaje BETWEEN 0 AND 100),
+    CHECK ((alicuotaIVA IS NULL AND ivaImporte = 0) OR alicuotaIVA IN (0, 10.5, 21.0))
+);	
+GO
+
+
+
+
+CREATE TABLE Pago(
+
+	idPago INT PRIMARY KEY IDENTITY(1,1),
+	idTransaccion VARCHAR(32) NOT NULL UNIQUE,
+	fecha DATE NOT NULL,
+	monto DECIMAL(10,2) NOT NULL CHECK (monto >= 0),
+
+	idFormaPago INT NOT NULL,
+
+	CONSTRAINT FK_Pago_FormaPago FOREIGN KEY (idFormaPago) REFERENCES FormaPago(idFormaPago),
+
+);
 
 -------------------------------------------------------------------------------------------------------------
 
@@ -313,61 +416,5 @@ END
 exec cargarObrasSociales @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
 exec cargarActividadesDeportivas @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
 exec cargarCategorias @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
-
-
-/*
-CREATE OR ALTER PROCEDURE cargarProfesores
-	@rutaCompletaArchivo VARCHAR(260)
-AS
-BEGIN
-	
-	CREATE TABLE #tempProfesores (
-		nombreCompletoProfesor VARCHAR(100) COLLATE Modern_Spanish_CI_AS
-	);
-
-	BEGIN TRY		
-		
-		BEGIN TRANSACTION
-
-
-		DECLARE @sql VARCHAR(512);
-
-		SET @sql = '
-		INSERT INTO #tempProfesores
-		SELECT DISTINCT profesor
-		FROM OPENROWSET(
-			''Microsoft.ACE.OLEDB.16.0'',
-			''Excel 12.0;HDR=YES;IMEX=1;Database=' + @rutaCompletaArchivo + ''',
-			''SELECT Profesor FROM [presentismo_actividades$]''
-		) AS datosExcel
-		';
-
-		EXEC sp_executesql @sql;
-
-
-		INSERT INTO Persona (nombre, apellido)
-		SELECT 
-		  LEFT(nombreCompletoProfesor, LEN(nombreCompletoProfesor) - CHARINDEX(' ', REVERSE(nombreCompletoProfesor))),
-		  RIGHT(nombreCompletoProfesor, CHARINDEX(' ', REVERSE(nombreCompletoProfesor)) - 1)
-		FROM #tempProfesores
-		WHERE NOT EXISTS (
-		  SELECT 1 FROM Persona p
-		  WHERE p.nombre = LEFT(nombreCompletoProfesor, LEN(nombreCompletoProfesor) - CHARINDEX(' ', REVERSE(nombreCompletoProfesor)))
-			AND p.apellido = RIGHT(nombreCompletoProfesor, CHARINDEX(' ', REVERSE(nombreCompletoProfesor)) - 1)
-		);
-
-		COMMIT TRANSACTION 
-
-	END TRY
-	BEGIN CATCH
-	IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-		DECLARE @ErrorMsg VARCHAR(4000) = ERROR_MESSAGE();
-		RAISERROR('Error en cargarProfesores: %s', 16, 1, @ErrorMsg);
-	END CATCH
-
-	DROP TABLE #tempProfesores;
-END;
-*/
-
 
 
