@@ -144,6 +144,9 @@ GO
 DROP TABLE IF EXISTS Usuario.Rol;
 GO
 
+DROP TABLE IF EXISTS Actividad.Jornada;
+GO
+
 -- *************** CREACIÓN DE TABLAS *************** --
 CREATE TABLE Usuario.Rol (
     idRol   INT IDENTITY PRIMARY KEY,
@@ -507,7 +510,7 @@ CREATE TABLE Factura.NotaCredito (
 	CHECK (monto > 0),
     CHECK (TRIM(motivo) <> '')
 );
-
+GO
 
 
 
@@ -525,6 +528,7 @@ CREATE TABLE Pago.Reembolso (
 	CHECK (TRIM(motivo) <> ''),
 	CHECK (monto > 0)
 );
+GO
 
 
 CREATE TABLE Pago.SaldoDeCuenta (
@@ -540,3 +544,13 @@ CREATE TABLE Pago.SaldoDeCuenta (
 
 	CHECK (monto > 0)
 );
+GO
+
+
+CREATE TABLE Actividad.Jornada(
+	idJornada INT IDENTITY PRIMARY KEY,
+	fecha DATE NOT NULL UNIQUE,
+	huboLluvia BIT NOT NULL
+);
+GO
+
