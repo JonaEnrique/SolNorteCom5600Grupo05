@@ -68,6 +68,11 @@ GO
 CREATE SCHEMA Importacion;
 GO
 
+DROP SCHEMA IF EXISTS Reporte;
+GO
+CREATE SCHEMA Reporte;
+GO
+
 -- *************** BORRADO de TABLAS *************** --
 
 
@@ -188,10 +193,9 @@ CREATE TABLE Persona.Persona (
     telefono            VARCHAR(20),
     telefonoEmergencia  VARCHAR(20),
     email               VARCHAR(255),
-    idRol               INT             DEFAULT NULL,
+    
 
-    FOREIGN KEY (idRol) REFERENCES Usuario.Rol(idRol),
-
+    
     CHECK (dni > 0 AND dni <= 999999999),
     CHECK (TRIM(nombre) <> '' AND TRIM(apellido) <> ''),
     CHECK (fechaNac <= GETDATE()),
@@ -218,8 +222,11 @@ CREATE TABLE Usuario.Usuario (
     fechaUltimaRenovacion DATE            NOT NULL,
     fechaARenovar         DATE            NOT NULL,
     idPersona             INT             NOT NULL,
+	idRol                 INT			  NOT NULL,
+
 
     FOREIGN KEY (idPersona) REFERENCES Persona.Persona(idPersona),
+	FOREIGN KEY (idRol) REFERENCES Usuario.Rol(idRol),
 
     CHECK (
         TRIM(nombre) <> ''
@@ -369,14 +376,13 @@ CREATE TABLE Actividad.Asiste (
     idAsistencia INT IDENTITY PRIMARY KEY,
     idSocio      INT           NOT NULL,
     idClase      INT           NOT NULL,
-    asistencia   CHAR(2)       NOT NULL,
+    asistencia   VARCHAR(2)       NOT NULL,
 
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
     FOREIGN KEY (idClase) REFERENCES Actividad.Clase(idClase),
 
     UNIQUE (idClase, idSocio),
-
-    CHECK (TRIM(asistencia) <> '' AND asistencia NOT LIKE '%[^A-Za-z]%')
+    CHECK (asistencia IN ('P', 'PP', 'A', 'J'))
 );
 GO
 
@@ -393,8 +399,7 @@ CREATE TABLE Actividad.Tarifa (
 
 
     CHECK (precio > 0),
-    CHECK (TRIM(descripcionActividad) 
-           IN ('UsoPileta', 'Colonia', 'AlquilerSum')),
+    CHECK (descripcionActividad IN ('UsoPileta', 'Colonia', 'AlquilerSum')),
     CHECK (
         TRIM(descripcionActividad) = 'UsoPileta'
         AND tipoCliente   IS NOT NULL
@@ -417,7 +422,7 @@ CREATE TABLE Actividad.ActividadExtra (
 	FOREIGN KEY (idTarifa) REFERENCES Actividad.Tarifa(idTarifa),
 
     CHECK (fechaFin >= fechaInicio),
-    CHECK (TRIM(descripcionActividad) IN ('UsoPileta', 'Colonia', 'AlquilerSum'))
+    CHECK (descripcionActividad IN ('UsoPileta', 'Colonia', 'AlquilerSum'))
 );
 GO
 
@@ -458,12 +463,14 @@ CREATE TABLE Pago.Pago (
 );
 GO
 
+
 CREATE TABLE Factura.Factura (
     idFactura          INT    IDENTITY(1,1) PRIMARY KEY,
     nroFactura         AS RIGHT('00000000' + CONVERT(VARCHAR(8), idFactura), 8) PERSISTED,
     puntoDeVenta       CHAR(4)      NOT NULL DEFAULT '0001',
-    tipoFactura        CHAR(1)      NOT NULL,
+    tipoFactura        CHAR(1)      NOT NULL DEFAULT 'B',
     tipoItem           VARCHAR(30)  NOT NULL,
+	observaciones	   VARCHAR(100) DEFAULT NULL,
     fechaEmision       DATE         NOT NULL,
     fechaRecargo       AS DATEADD(DAY, 5, fechaEmision)   PERSISTED,
     fechaVencimiento   AS DATEADD(DAY,10, fechaEmision)   PERSISTED,
@@ -487,7 +494,7 @@ CREATE TABLE Factura.Factura (
     CHECK (tipoFactura IN ('A','B','C','E','M')),
     CHECK (tipoItem IN (
         'UsoPileta','Cuota','AlquilerSum','Colonia',
-        'Vóley','Futsal','Baile artístico','Natación','Ajederez'
+        'Vóley','Futsal','Baile artístico','Natación','Ajederez', 'Taekwondo'
     )),
     CHECK (subtotal >= 0),
     CHECK (porcentajeIva BETWEEN 0 AND 1),
@@ -497,6 +504,7 @@ CREATE TABLE Factura.Factura (
     ),
     CHECK (totalFactura > 0),
     CHECK (estado IN ('Pendiente','Pagada','Pagada Vencida','Cancelada'))
+
 );
 GO
 
