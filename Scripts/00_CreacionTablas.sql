@@ -1,6 +1,6 @@
 /*
     ---------------------------------------------------------------------
-    -Fecha: 23/05/2025
+    -Fecha: 20/06/2025
     -Grupo: 05
     -Materia: Bases de Datos Aplicada
 
@@ -63,6 +63,11 @@ GO
 CREATE SCHEMA Usuario;
 GO
 
+DROP SCHEMA IF EXISTS Importacion;
+GO
+CREATE SCHEMA Importacion;
+GO
+
 -- *************** BORRADO de TABLAS *************** --
 
 
@@ -94,9 +99,6 @@ DROP TABLE IF EXISTS Factura.Factura;
 GO
 
 DROP TABLE IF EXISTS Actividad.Tarifa;
-GO
-
-DROP TABLE IF EXISTS Actividad.TipoActividadExtra;
 GO
 
 DROP TABLE IF EXISTS Actividad.InvitacionEvento;
@@ -148,6 +150,7 @@ DROP TABLE IF EXISTS Actividad.Jornada;
 GO
 
 -- *************** CREACIÓN DE TABLAS *************** --
+
 CREATE TABLE Usuario.Rol (
     idRol   INT IDENTITY PRIMARY KEY,
     nombre  VARCHAR(50) NOT NULL,
@@ -237,10 +240,10 @@ GO
 CREATE TABLE Socio.ObraSocial (
 	idObraSocial	INT IDENTITY PRIMARY KEY, 
 	nombre			VARCHAR(40) UNIQUE NOT NULL,
-	telefono		VARCHAR(40) UNIQUE NOT NULL,
+	telefono		VARCHAR(40) NOT NULL,
 
 	CHECK (TRIM(nombre) <> '' AND nombre LIKE '%[A-Za-z]%'),
-    CHECK (telefono <> '' AND telefono NOT LIKE '%[^0-9/ ]%')
+    CHECK (telefono <> '' AND telefono NOT LIKE '%[^0-9/ ()-]%')
 
 );
 GO
@@ -274,9 +277,9 @@ CREATE TABLE Socio.Socio (
     FOREIGN KEY (idCategoria)   REFERENCES Socio.Categoria(idCategoria),
     FOREIGN KEY (idObraSocial)  REFERENCES Socio.ObraSocial(idObraSocial),
 
-    CHECK (TRIM(nroSocio) <> '' AND nroSocio NOT LIKE '%[^A-Za-z0-9]%'),
+    CHECK (TRIM(nroSocio) <> '' AND nroSocio NOT LIKE '%[^A-Za-z0-9-]%'),
     CHECK ((idObraSocial IS NULL AND nroObraSocial IS NULL) 
-           OR (idObraSocial IS NOT NULL AND TRIM(nroObraSocial)<>'' AND nroObraSocial NOT LIKE '%[^A-Za-z0-9]%'))
+           OR (idObraSocial IS NOT NULL AND TRIM(nroObraSocial)<>'' AND nroObraSocial NOT LIKE '%[^A-Za-z0-9-]%'))
 );
 GO
 
@@ -321,7 +324,6 @@ CREATE TABLE Actividad.ActividadDeportiva (
 	CHECK (TRIM(nombre) <> '' AND nombre NOT LIKE '%[^A-Za-z ]%')
 );
 GO
-
 
 
 CREATE TABLE Actividad.CostoActividadDeportiva (
@@ -378,28 +380,47 @@ CREATE TABLE Actividad.Asiste (
 );
 GO
 
-CREATE TABLE Actividad.TipoActividadExtra (
-    idTipoAct   INT IDENTITY PRIMARY KEY,
-    descripcion VARCHAR(20)	 NOT NULL,
+--Mas alla de que no se presentan tarifas de Colonia o AlquilerSum, la tabla lo contempla
+CREATE TABLE Actividad.Tarifa (
+    idTarifa               INT             IDENTITY PRIMARY KEY,
+    precio                 DECIMAL(10,2)   NOT NULL,
+    fechaVigencia          DATE            NOT NULL,
 
-    CHECK (descripcion IN ('UsoPileta', 'Colonia', 'AlquilerSum'))
+    descripcionActividad   VARCHAR(20)     NOT NULL,
+    tipoCliente            VARCHAR(10),
+    tipoDuracion           VARCHAR(10),
+    tipoEdad               VARCHAR(10),
+
+
+    CHECK (precio > 0),
+    CHECK (TRIM(descripcionActividad) 
+           IN ('UsoPileta', 'Colonia', 'AlquilerSum')),
+    CHECK (
+        TRIM(descripcionActividad) = 'UsoPileta'
+        AND tipoCliente   IS NOT NULL
+        AND tipoDuracion  IS NOT NULL
+        AND tipoEdad      IS NOT NULL
+    )
 );
 GO
+
 
 CREATE TABLE Actividad.ActividadExtra (
-    idActExtra    INT       IDENTITY PRIMARY KEY,
-    fechaInicio   DATE      NOT NULL,
-    fechaFin      DATE      NOT NULL,
-    idSocio       INT       NOT NULL,
-    idTipoAct     INT       NOT NULL, 
+    idActividadExtra		INT             IDENTITY PRIMARY KEY,
+    descripcionActividad    VARCHAR(20)     NOT NULL,
+    fechaInicio				DATE            NOT NULL,
+    fechaFin				DATE            NOT NULL,
+    idSocio					INT             NOT NULL,
+	idTarifa				INT				NOT NULL,
 
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
+	FOREIGN KEY (idTarifa) REFERENCES Actividad.Tarifa(idTarifa),
 
-    FOREIGN KEY (idTipoAct) REFERENCES Actividad.TipoActividadExtra(idTipoAct),
-
-    CHECK (fechaFin >= fechaInicio)       
+    CHECK (fechaFin >= fechaInicio),
+    CHECK (TRIM(descripcionActividad) IN ('UsoPileta', 'Colonia', 'AlquilerSum'))
 );
 GO
+
 
 CREATE TABLE Actividad.InvitacionEvento (
     idInvitacion       INT IDENTITY PRIMARY KEY,
@@ -407,36 +428,19 @@ CREATE TABLE Actividad.InvitacionEvento (
     idInvitado         INT       NOT NULL,
     idActExtra         INT       NOT NULL,
 
-    FOREIGN KEY (idActExtra)  REFERENCES Actividad.ActividadExtra(idActExtra),
+    FOREIGN KEY (idActExtra)  REFERENCES Actividad.ActividadExtra(idActividadExtra),
     FOREIGN KEY (idInvitado)  REFERENCES Persona.Persona(idPersona),
 
 );
 GO
 
 
-CREATE TABLE Actividad.Tarifa (
-    idTarifa       INT             IDENTITY PRIMARY KEY,
-    importe        DECIMAL(10,2)   NOT NULL,
-    fechaVigencia  DATE            NOT NULL,
-    idTipoAct      INT             NOT NULL,
-    tipoCliente    VARCHAR(10)     NOT NULL,
-    tipoDuracion   VARCHAR(10)     NOT NULL,
-    tipoEdad       VARCHAR(10)     NOT NULL,
-
-    FOREIGN KEY (idTipoAct) REFERENCES Actividad.TipoActividadExtra(idTipoAct),
-
-    CHECK (importe >= 0),
-    CHECK (TRIM(tipoCliente)   IN ('Socio','Invitado')),
-    CHECK (TRIM(tipoDuracion)  IN ('Día','Mes','Temporada')),
-    CHECK (TRIM(tipoEdad)      IN ('Adulto','Menor'))
-);
-GO
 
 CREATE TABLE Pago.FormaPago (
 	idFormaPago		INT IDENTITY PRIMARY KEY,
 	nombre			VARCHAR(50) NOT NULL,
 
-	CHECK ( nombre IN ( 'Visa','MasterCard','Tarjeta Naranja','Pago Facil','Rapipago','Transferencia Mercado Pago')),
+	CHECK ( nombre IN ( 'efectivo', 'Visa','MasterCard','Tarjeta Naranja','Pago Facil','Rapipago','Transferencia Mercado Pago')),
 );
 GO
 
@@ -554,3 +558,16 @@ CREATE TABLE Actividad.Jornada(
 );
 GO
 
+/*
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID('dbo.Jornada')
+      AND name = 'IX_Jornada_Fecha'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Jornada_Fecha
+    ON dbo.Jornada(fecha);
+END;
+GO
+*/
