@@ -20,6 +20,14 @@
 USE Com5600G05						
 GO
 
+
+-- Habilitar consultas Ad Hoc para OPENROWSET
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXEC sp_configure 'Ad Hoc Distributed Queries', 1;
+RECONFIGURE;
+GO
+
 /*
 --------------------------------------------------------------------------------
   SECCIÓN: Jornadas
@@ -182,7 +190,12 @@ BEGIN
 			t.precio,
 			a.idActividadDeportiva
 		FROM #tempTarifasActividades t
-		JOIN Actividad.ActividadDeportiva a ON a.nombre = t.nombre
+		JOIN Actividad.ActividadDeportiva a   
+			ON a.nombre = 
+			 CASE 
+			   WHEN t.nombre = 'Ajederez' THEN 'Ajedrez'
+			   ELSE t.nombre 
+			 END
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM Actividad.CostoActividadDeportiva c
@@ -742,9 +755,8 @@ BEGIN
         ) AS datosExcel
 		WHERE CONVERT(DATE, datosExcel.[fecha de asistencia], 103) <= GETDATE() 
         ';
+        EXEC (@sql);
 
-
-        EXEC (@sql)
 
 		INSERT INTO Actividad.Clase (fecha, idActividadDeportiva, profesor)
         SELECT DISTINCT
@@ -771,10 +783,7 @@ BEGIN
 		);
 
 
-
-		--Las Facturas se asignaran a los Tutores, en caso de que un Socio dentro de un Grupo Familiar realice una Actividad Deportiva.
 		
-	
 		WITH InformacionFactura AS (
 			-- 1) Obtiene cada asistencia y el mes de facturación (primer día del mes)
 			SELECT DISTINCT
@@ -806,6 +815,7 @@ BEGIN
 				c.precio,
 				ROW_NUMBER() OVER (
 					PARTITION BY 
+						inf.socioRealizoActividad,
 						inf.idActividadDeportiva, 
 						inf.fechaAsistencia
 					ORDER BY
@@ -834,50 +844,56 @@ BEGIN
 			FROM PrecioActividadPorFecha AS paf
 			WHERE paf.precioMasCercano = 1
 		),
-		FacturasMensuales AS (
-			-- 4) Cuenta cuántas actividades se cobran por socio y mes
+		DescuentoPorVariasActividades AS (
+			-- 4) Cuenta cuántas actividades hace el socio menor cada mes
 			SELECT
-				idDueñoFactura,
-				DATEFROMPARTS(YEAR(fechaAsistencia), MONTH(fechaAsistencia), 1) AS primerDiaMes,
-				COUNT(*)                                        AS CantidadActividades
+				socioRealizoActividad,
+				primerDiaMes = DATEFROMPARTS(
+					YEAR(fechaAsistencia),
+					MONTH(fechaAsistencia),
+					1
+				),
+				COUNT(*) AS CantidadActividades
 			FROM FacturasBrutas
 			GROUP BY
-				idDueñoFactura,
-				DATEFROMPARTS(YEAR(fechaAsistencia), MONTH(fechaAsistencia), 1)
+				socioRealizoActividad,
+				DATEFROMPARTS(
+					YEAR(fechaAsistencia),
+					MONTH(fechaAsistencia),
+					1
+				)
 		)
-		
 		INSERT INTO Factura.Factura (tipoItem,fechaEmision,observaciones,subtotal,idSocio,estado)
 		SELECT
 			fb.nombreActividad,
 			fb.fechaAsistencia,
 			CASE 
-				WHEN fm.CantidadActividades > 1 
+				WHEN d.CantidadActividades > 1 
 					THEN '10% descuento aplicado por ' 
-						+ CAST(fm.CantidadActividades AS VARCHAR(2)) 
-						+ ' actividades'
+						 + CAST(d.CantidadActividades AS VARCHAR(2)) 
+						 + ' actividades'
 				ELSE NULL
 			END,
 			CASE 
-				WHEN fm.CantidadActividades > 1 
+				WHEN d.CantidadActividades > 1 
 					THEN ROUND(fb.precio * 0.90, 2)
 				ELSE fb.precio
 			END,
 			fb.idDueñoFactura,
 			'Pagada'
 		FROM FacturasBrutas AS fb
-		JOIN FacturasMensuales AS fm
-			ON fm.idDueñoFactura = fb.idDueñoFactura
-		   AND fm.primerDiaMes   = DATEFROMPARTS(YEAR(fb.fechaAsistencia), MONTH(fb.fechaAsistencia), 1)
+		JOIN DescuentoPorVariasActividades AS d
+			ON d.socioRealizoActividad = fb.socioRealizoActividad
+		   AND d.primerDiaMes         = DATEFROMPARTS( YEAR(fb.fechaAsistencia),  MONTH(fb.fechaAsistencia),  1 )
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM Factura.Factura AS f
 			WHERE 
-				f.tipoItem     = fb.nombreActividad
+				f.tipoItem      = fb.nombreActividad
 				AND f.fechaEmision = fb.fechaAsistencia
-				AND f.idSocio    = fb.idDueñoFactura
+				AND f.idSocio     = fb.idDueñoFactura
 		);
-
-
+	
 
 		COMMIT TRANSACTION;
 	END TRY
@@ -927,10 +943,10 @@ BEGIN
 
 	);
 
-	CREATE TABLE #NuevasCuotas (
-		idPago INT PRIMARY KEY,
-		idTransaccion VARCHAR(64) COLLATE Modern_Spanish_CI_AS,
-		fechaPago DATE
+	CREATE TABLE #NuevasFacturas (
+		idFactura INT PRIMARY KEY,
+		idSocio VARCHAR(20) COLLATE Modern_Spanish_CI_AS,
+		fechaEmision DATE
 	);
 
 
@@ -956,84 +972,69 @@ BEGIN
         ) AS datosExcel;
         ';
         EXEC (@sql);
-		
-		
-		--Inserto nuevos pagos y guardo sus claves en #NuevasCuotas
-		INSERT INTO Pago.Pago (
-			idTransaccion,
-			fecha,
-			monto,
-			idFormaPago
-		)
-		OUTPUT
-			inserted.idPago,
-			inserted.idTransaccion,
-			inserted.fecha
-		INTO #NuevasCuotas (idPago, idTransaccion, fechaPago)
-		SELECT
-			t.idTransaccion,
-			t.fecha,
-			t.valor,
-			fp.idFormaPago
-		FROM #tempPagos AS t
-		JOIN Pago.FormaPago AS fp
-			ON fp.nombre = t.medioDePago
-		WHERE NOT EXISTS (
-			SELECT 1
-			FROM Pago.Pago AS p
-			WHERE p.idTransaccion = t.idTransaccion
-		);
+
+
+
+		INSERT INTO #tempPagos (idTransaccion, fecha, nroSocio, valor, medioDePago)
+SELECT
+    CAST(CAST([Id de pago] AS DECIMAL(38,0)) AS VARCHAR(32)),
+    fecha,
+    [Responsable de pago],
+    Valor,
+    [Medio de pago]
+FROM OPENROWSET(
+    'Microsoft.ACE.OLEDB.16.0',
+    'Excel 12.0;HDR=YES;IMEX=1;Database=C:\Temp\Datos socios.xlsx',
+    'SELECT * FROM [pago cuotas$]'
+) AS datosExcel;
 
 
 		DECLARE @recargo DECIMAL(5,4) = 1.10;
 		DECLARE @diaLimiteRecargo INT     = 10;		
-													
-	
-		-- Genero facturas a partir de los pagos recien insertados
-		INSERT INTO Factura.Factura (
-			tipoItem,
-			fechaEmision,
-			observaciones,
-			subtotal,
-			idSocio,
-			idPago,
-			estado
-		)
-		SELECT
+		
+		--Genero facturas a partir de pagos nuevos.
+		INSERT INTO Factura.Factura (tipoItem, fechaEmision, subtotal, idSocio, estado)
+		OUTPUT inserted.idFactura, inserted.fechaEmision, inserted.idSocio INTO #NuevasFacturas(idFactura, fechaEmision, idSocio)
+		SELECT 
 			'Cuota',  
-			DATEFROMPARTS(
-				YEAR(nc.fechaPago),
-				MONTH(nc.fechaPago),
-				1
-			)                              AS fechaEmision,
-	
-			NULL,
-			-- Si el pago fue despues del dia limite se quita el recargo del total del Pago.
-			CASE
-				WHEN DAY(nc.fechaPago) > @diaLimiteRecargo THEN
-					ROUND(t.valor / @recargo, 2)
-				ELSE
-					ROUND(t.valor, 2)
-			END                              AS subtotal,
-			s.idSocio                        AS idSocio,
-			p.idPago                         AS idPago,
-			CASE
-				WHEN p.fecha > DATEADD(DAY,10, DATEFROMPARTS(YEAR(nc.fechaPago),MONTH(nc.fechaPago),1)) THEN 'Pagada'
-				ELSE 'Pagada Vencida'
-			END
-		FROM #NuevasCuotas AS nc
-		JOIN Pago.Pago       AS p
-			ON p.idPago = nc.idPago
-		JOIN #tempPagos      AS t
-			ON t.idTransaccion = nc.idTransaccion
-		JOIN Socio.Socio     AS s
-			ON s.nroSocio = t.nroSocio
+			DATEFROMPARTS( YEAR(t.fecha), MONTH(t.fecha), 1 ),
+		CASE
+			WHEN DAY(t.fecha) > @diaLimiteRecargo THEN t.valor / @recargo
+			ELSE t.valor
+		END,
+		s.idSocio,                                
+		CASE
+			WHEN t.fecha > DATEADD(DAY,10, DATEFROMPARTS(YEAR(t.fecha),MONTH(t.fecha),1)) THEN 'Pagada Vencida'
+			ELSE 'Pagada'
+		END
+		FROM #tempPagos t
+		JOIN Socio.Socio s ON s.nroSocio = t.nroSocio
 		WHERE NOT EXISTS (
-			SELECT 1
-			FROM Factura.Factura AS f
-			  WHERE f.idSocio      = s.idSocio
-				  AND f.tipoItem     = 'Cuota'
-				  AND f.fechaEmision = DATEFROMPARTS(YEAR(nc.fechaPago), MONTH(nc.fechaPago), 1)   
+			SELECT 1 
+			FROM Factura.Factura f
+			WHERE f.idSocio = s.idSocio
+			AND f.tipoItem = 'Cuota'
+			AND f.fechaEmision = DATEFROMPARTS( YEAR(t.fecha), MONTH(t.fecha), 1 )
+		)
+
+		--Genero los pagos asociados a la Facturas nuevas.
+		INSERT INTO Pago.Pago(idTransaccion, fecha, monto, idFormaPago, idFactura)
+		SELECT
+			t.idTransaccion,
+			t.fecha,
+			t.valor,
+			fp.idFormaPago,
+			nf.idFactura
+
+		FROM #NuevasFacturas nf
+		JOIN Socio.Socio s ON s.idSocio = nf.idSocio
+		JOIN #tempPagos t ON t.nroSocio = s.nroSocio
+			AND DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 1) = nf.fechaEmision
+		JOIN Pago.FormaPago fp ON fp.nombre = t.medioDePago
+		WHERE NOT EXISTS(
+			SELECT 1 
+			FROM Pago.Pago p
+			WHERE p.idTransaccion = t.idTransaccion
 		);
 
 

@@ -46,7 +46,7 @@ FROM (VALUES
     ('Taekwondo'),
     ('Baile artístico'),
     ('Natación'),
-    ('Ajederez')
+    ('Ajedrez')
 ) AS v(nombre)
 WHERE NOT EXISTS (
     SELECT 1

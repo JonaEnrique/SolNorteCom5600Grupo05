@@ -1,126 +1,100 @@
+/*
+    ---------------------------------------------------------------------
+    -Fecha: 20/06/2025
+    -Grupo: 05
+    -Materia: Bases de Datos Aplicada
+
+    - Integrantes:
+        - Nicolás Pérez       | 40015709
+        - Santiago Sánchez    | 42281463
+        - Jonathan Enrique    | 43301711
+        - Teo Turri           | 42819058
+
+    - Consigna: 
+        Generacion de los reportes solicitados.
+    ---------------------------------------------------------------------
+*/
+
+
 USE Com5600G05						
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Reporte')
-    EXEC('CREATE SCHEMA Reporte');
-GO
 
 
---Reporte 1
+
+--------------------------------------------------------------------------------
+--REPORTE 1
+--------------------------------------------------------------------------------
+
 
 
 CREATE OR ALTER PROCEDURE Reporte.ListadoSociosMorosos
-	@desde DATE,
-	@hasta DATE
+	@FechaInicio DATE,
+	@FechaFin DATE
 AS
 BEGIN
-	WITH CuotasFiltradas AS (
-		  SELECT DISTINCT
-			COALESCE(gf.idSocioTutor, c.idSocio) AS idDueñoFactura,
-			FORMAT(c.periodo,'MMMM','es-ES')      AS mesLower
-		  FROM dbo.Cuota AS c
-		  LEFT JOIN dbo.GrupoFamiliar AS gf
-			ON gf.idSocioMenor = c.idSocio
-		  WHERE 
-			c.periodo BETWEEN @desde AND @hasta 
-			AND c.estado IN ('Vencida','Pagada Vencida')
-	),
-	MesesCapitalizados AS (
-		  SELECT
-			idDueñoFactura,
-			UPPER(LEFT(mesLower,1)) 
-			  + LOWER(SUBSTRING(mesLower,2,20)) AS mesNombre	--Puse 20 para que sea un tamaño que quepan los nombres de los meses.
-		  FROM CuotasFiltradas
-	),
-	SociosResponsablesPago AS (
-		-- traigo los datos del tutor o del propio socio.
-		SELECT DISTINCT
-		  s.idSocio          AS idDueñoFactura,
-		  s.nroSocio,
-		  p.nombre + ' ' + p.apellido AS nombreCompleto
-		FROM CuotasFiltradas  cf
-		JOIN Socio s ON s.idSocio = cf.idDueñoFactura
-		JOIN Persona p ON p.idPersona = s.idSocio
+
+	WITH SociosQueIncumplieron AS (
+		SELECT
+			f.idSocio,
+			s.nroSocio,
+			p.nombre + ' ' + p.apellido AS NombreApellido,
+			FORMAT(f.fechaEmision, 'MMMM', 'es-ES') AS MesIncumplido
+		FROM Factura.Factura AS f
+		JOIN Socio.Socio s ON s.idSocio = f.idSocio
+		JOIN Persona.Persona p ON p.idPersona = s.idSocio
+		WHERE f.tipoItem   = 'Cuota' AND f.estado = 'Pagada Vencida' AND f.fechaEmision BETWEEN @FechaInicio AND @FechaFin
 	),
 	ConteoMorosidad AS (
-		SELECT
-		  srp.idDueñoFactura,
-		  srp.nroSocio,
-		  srp.nombreCompleto,
-		  mc.mesNombre,
-		  COUNT(*) OVER (PARTITION BY srp.idDueñoFactura) AS TotalIncumplimientos
-		FROM MesesCapitalizados mc
-		JOIN SociosResponsablesPago srp
-			ON srp.idDueñoFactura = mc.idDueñoFactura	
+		SELECT 
+		  f.idSocio,
+		  COUNT(*) AS CantidadIncumplimientos
+		FROM Factura.Factura f
+		WHERE f.tipoItem = 'Cuota' AND f.estado = 'Pagada Vencida' AND f.fechaEmision BETWEEN @FechaInicio AND @FechaFin
+		GROUP BY f.idSocio
 	),
 	RankingMorosidad AS (
 		SELECT
 		  *,
-		  RANK() OVER (ORDER BY TotalIncumplimientos DESC) AS RankingMorosidad
+		  DENSE_RANK() OVER (ORDER BY CantidadIncumplimientos DESC) AS Ranking
 		FROM ConteoMorosidad
-		WHERE TotalIncumplimientos > 2
+		WHERE CantidadIncumplimientos > 2
 	)
+
 	SELECT
-		'Morosos Recurrentes'										AS [NombreReporte],
-		CAST(@desde AS varchar) + ' - ' + CAST(@hasta AS varchar)	AS [Período],																
-		(
-		  SELECT
-			nroSocio                     AS [NroSocio],
-			nombreCompleto               AS [NombreApellido],
-			mesNombre                    AS [MesIncumplido]
-		  FROM RankingMorosidad 
-		  WHERE TotalIncumplimientos > 2
-		  ORDER BY RankingMorosidad ASC
-		  FOR XML PATH('Socio'), TYPE
-		)
-	FOR XML PATH(''), ROOT('MorososRecurrentes');                   
+	'Morosos Recurrentes'												AS [NombreReporte],
+	CAST(@FechaInicio AS varchar) + ' - ' + CAST(@FechaFin AS varchar)	AS [Período],
+	(	SELECT
+			nroSocio						AS [NroSocio],
+			NombreApellido					AS [NombreApellido],
+			MesIncumplido                   AS [MesIncumplido]
+		FROM SociosQueIncumplieron s
+		JOIN RankingMorosidad r ON r.idSocio = s.idSocio
+		ORDER BY r.Ranking ASC
+		FOR XML PATH('Socio'), TYPE
+	)
+	FOR XML PATH(''), ROOT('MorososRecurrentes');                
 END;
 GO
 
 
---Reporte 2
+--------------------------------------------------------------------------------
+--REPORTE 2
+--------------------------------------------------------------------------------
+
+
 CREATE OR ALTER PROCEDURE Reporte.IngresosPorActividadMes
 AS
 BEGIN
 	
-
-	WITH ActividadMensualSocio AS (
-		SELECT DISTINCT
-			s.idSocio,
-			c.idActividadDeportiva,
-			DATEFROMPARTS(YEAR(c.fecha), MONTH(c.fecha), 1) AS fecha
-			FROM Asiste a
-			JOIN Socio s ON s.idSocio = a.idSocio
-			JOIN Clase c ON c.idClase = a.idClase
-			--Recoger asistencias desde el principio de año hasta la fecha actual.
-			WHERE DATEFROMPARTS(YEAR(c.fecha), MONTH(c.fecha), 1) BETWEEN 
-					 DATEFROMPARTS(YEAR(GETDATE()), 1, 1) AND GETDATE()
-		),
-		PrecioPorActividadSocio AS (
+		WITH ValoresParaPivot AS(
 			SELECT
-				ad.nombre	AS actividad,
-				FORMAT(ams.fecha,'MMMM','es-ES') AS mesNombre,
-				c.precio,
-
-				-- Para cada asistencia, selecciona el precio cuya fecha de vigencia del costoActividad sea la menor
-				-- fecha ? fechaAsistencia; si no existe ninguna, utiliza la fecha de vigencia del costoActividad maxima anterior.
-				ROW_NUMBER() OVER (
-					PARTITION BY ams.idSocio, ad.nombre, ams.fecha
-					ORDER BY 
-						CASE WHEN c.fechaVigencia >= ams.fecha THEN 0 ELSE 1 END,
-						ABS(DATEDIFF(day, c.fechaVigencia, ams.fecha))	
-				) AS precioMasCernano
-			FROM ActividadMensualSocio ams 
-			JOIN ActividadDeportiva ad ON ad.idActividadDeportiva = ams.idActividadDeportiva
-			JOIN CostoActividadDeportiva c ON c.idActividadDeportiva = ams.idActividadDeportiva
-		),
-		ValoresParaPivot AS(
-			SELECT
-				actividad AS Actividad,
-				mesNombre,
-				precio
-			FROM PrecioPorActividadSocio
-			WHERE precioMasCernano = 1
+				f.tipoItem AS Actividad,
+				FORMAT(f.fechaEmision, 'MMMM', 'es-ES') AS NombreMes,
+				CAST (f.totalFactura as decimal(10,2)) AS totalFactura			--Sin el CAST produce mas decimales de la cuenta.
+			FROM Factura.Factura f
+			WHERE f.tipoItem IN ('Vóley','Futsal','Baile artístico','Natación','Ajedrez', 'Taekwondo')
+			AND f.fechaEmision BETWEEN DATEFROMPARTS(YEAR(GETDATE()), 1, 1) AND GETDATE()
 		)
 		SELECT
 			actividad,
@@ -138,8 +112,8 @@ BEGIN
 			ISNULL([Diciembre],   0) AS Diciembre
 	FROM ValoresParaPivot
 	PIVOT (
-		SUM(precio)
-		FOR mesNombre IN (
+		SUM(totalFactura)
+		FOR NombreMes IN (
 			[Enero],[Febrero],[Marzo],[Abril],[Mayo],[Junio],
 			[Julio],[Agosto],[Septiembre],[Octubre],[Noviembre],[Diciembre]
 		)
@@ -149,16 +123,21 @@ BEGIN
 END;
 GO
 
---Reporte 3 
+
+--------------------------------------------------------------------------------
+--REPORTE 3
+--------------------------------------------------------------------------------
+
+
 CREATE OR ALTER PROCEDURE Reporte.InasistenciasCategoriaActividad
 AS
 BEGIN
 	SELECT ca.nombre AS Categoria, ad.nombre AS Actividad, COUNT(DISTINCT s.nroSocio) AS CantidadSociosConInasistencia
-	FROM Asiste a
-	JOIN Socio s ON s.idSocio = a.idSocio
-	JOIN Categoria ca ON ca.idCategoria = s.idCategoria
-	JOIN Clase cl ON cl.idClase = a.idClase
-	JOIN ActividadDeportiva ad ON ad.idActividadDeportiva = cl.idActividadDeportiva
+	FROM Actividad.Asiste a
+	JOIN Socio.Socio s ON s.idSocio = a.idSocio
+	JOIN Socio.Categoria ca ON ca.idCategoria = s.idCategoria
+	JOIN Actividad.Clase cl ON cl.idClase = a.idClase
+	JOIN Actividad.ActividadDeportiva ad ON ad.idActividadDeportiva = cl.idActividadDeportiva
 	WHERE a.asistencia <> 'P'
 	GROUP BY ca.nombre, ad.nombre
 	ORDER BY CantidadSociosConInasistencia DESC
@@ -167,7 +146,11 @@ END;
 GO
 
 
---Reporte 4
+--------------------------------------------------------------------------------
+--REPORTE 4
+--------------------------------------------------------------------------------
+
+
 CREATE OR ALTER PROCEDURE Reporte.InasistenciasSocio
 AS
 BEGIN
@@ -179,12 +162,12 @@ BEGIN
 			END AS Edad,
 			ca.nombre AS Categoria, 
 			ad.nombre AS Actividad
-	FROM Socio s
-	JOIN Persona p ON p.idPersona = s.idSocio
-	JOIN Categoria ca ON ca.idCategoria = s.idCategoria
-	JOIN Asiste a ON a.idSocio = s.idSocio
-	JOIN Clase c ON c.idClase = a.idClase
-	JOIN ActividadDeportiva ad ON ad.idActividadDeportiva = c.idActividadDeportiva
+	FROM Socio.Socio s
+	JOIN Persona.Persona p ON p.idPersona = s.idSocio
+	JOIN Socio.Categoria ca ON ca.idCategoria = s.idCategoria
+	JOIN Actividad.Asiste a ON a.idSocio = s.idSocio
+	JOIN Actividad.Clase c ON c.idClase = a.idClase
+	JOIN Actividad.ActividadDeportiva ad ON ad.idActividadDeportiva = c.idActividadDeportiva
 	WHERE a.asistencia <> 'P'
 	FOR XML PATH('Socio'), ROOT('ReporteInasistenciasSocio');
 END;

@@ -449,21 +449,6 @@ CREATE TABLE Pago.FormaPago (
 );
 GO
 
-CREATE TABLE Pago.Pago (
-    idPago           INT           IDENTITY PRIMARY KEY,
-    idTransaccion    VARCHAR(64)   NOT NULL UNIQUE,
-    fecha            DATE          NOT NULL,
-    monto            DECIMAL(10,2) NOT NULL CHECK (monto > 0),
-
-    idFormaPago      INT           NOT NULL,
- 
-    FOREIGN KEY (idFormaPago) REFERENCES Pago.FormaPago(idFormaPago),
- 
-    CHECK (TRIM(idTransaccion) <> '')
-);
-GO
-
-
 CREATE TABLE Factura.Factura (
     idFactura          INT    IDENTITY(1,1) PRIMARY KEY,
     nroFactura         AS RIGHT('00000000' + CONVERT(VARCHAR(8), idFactura), 8) PERSISTED,
@@ -486,15 +471,15 @@ CREATE TABLE Factura.Factura (
                         ) PERSISTED,
     estado             VARCHAR(15)  NOT NULL DEFAULT 'Pendiente',
     idSocio            INT          NOT NULL,
-    idPago             INT          NULL,
+   --idPago             INT          NULL,
 
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
-    FOREIGN KEY (idPago)  REFERENCES Pago.Pago(idPago),
+    --FOREIGN KEY (idPago)  REFERENCES Pago.Pago(idPago),
 
     CHECK (tipoFactura IN ('A','B','C','E','M')),
     CHECK (tipoItem IN (
         'UsoPileta','Cuota','AlquilerSum','Colonia',
-        'Vóley','Futsal','Baile artístico','Natación','Ajederez', 'Taekwondo'
+        'Vóley','Futsal','Baile artístico','Natación','Ajedrez', 'Taekwondo'
     )),
     CHECK (subtotal >= 0),
     CHECK (porcentajeIva BETWEEN 0 AND 1),
@@ -507,6 +492,25 @@ CREATE TABLE Factura.Factura (
 
 );
 GO
+
+CREATE TABLE Pago.Pago (
+    idPago           INT           IDENTITY PRIMARY KEY,
+    idTransaccion    VARCHAR(64)   NOT NULL UNIQUE,
+    fecha            DATE          NOT NULL,
+    monto            DECIMAL(10,2) NOT NULL CHECK (monto > 0),
+
+    idFormaPago      INT           NOT NULL,
+	idFactura		 INT		   NOT NULL UNIQUE,
+
+    FOREIGN KEY (idFormaPago) REFERENCES Pago.FormaPago(idFormaPago),
+	FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura),
+
+    CHECK (TRIM(idTransaccion) <> '')
+);
+GO
+
+
+
 
 
 CREATE TABLE Factura.NotaCredito (
@@ -566,16 +570,3 @@ CREATE TABLE Actividad.Jornada(
 );
 GO
 
-/*
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.indexes
-    WHERE object_id = OBJECT_ID('dbo.Jornada')
-      AND name = 'IX_Jornada_Fecha'
-)
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_Jornada_Fecha
-    ON dbo.Jornada(fecha);
-END;
-GO
-*/

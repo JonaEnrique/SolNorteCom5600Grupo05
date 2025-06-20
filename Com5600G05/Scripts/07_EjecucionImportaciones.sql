@@ -2,10 +2,18 @@ USE Com5600G05
 GO
 
 
-exec importarJornadas @rutaCompletaArchivo = 'C:\Temp\open-meteo-buenosaires_2024.csv';
-exec importarJornadas @rutaCompletaArchivo = 'C:\Temp\open-meteo-buenosaires_2025.csv';
-exec importarTarifas @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
-exec importarSocios @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
-exec importarSociosMenores @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
-exec importarAsistencias @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
-exec importarCuotas @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
+
+EXEC Importacion.ImportarJornadas @rutaCompletaArchivo = 'C:\Temp\open-meteo-buenosaires_2024.csv';
+GO
+EXEC Importacion.ImportarJornadas @rutaCompletaArchivo = 'C:\Temp\open-meteo-buenosaires_2025.csv';
+GO
+EXEC Importacion.ImportarTarifas @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
+GO
+EXEC Importacion.ImportarSociosRP @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
+GO
+EXEC Importacion.ImportarGrupoFamiliar @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
+GO
+EXEC Importacion.ImportarAsistencias @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
+GO
+EXEC Importacion.ImportarCuotas @rutaCompletaArchivo = 'C:\Temp\Datos socios.xlsx';
+GO
