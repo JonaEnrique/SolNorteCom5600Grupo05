@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# SQL Server Management Studio Solution File, Format Version 20.00
+VisualStudioVersion = 15.0.28307.421
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scritps", "Scritps", "{80CFE0A1-E182-48B3-91AA-A26FFF8BBB9E}"
+	ProjectSection(SolutionItems) = preProject
+		Scripts\00_CreacionTablas.sql = Scripts\00_CreacionTablas.sql
+		Scripts\01_Inserciones.sql = Scripts\01_Inserciones.sql
+		Scripts\04_JuegoDePrueba-Inserciones.sql = Scripts\04_JuegoDePrueba-Inserciones.sql
+		Scripts\05_Preimportaciones.sql = Scripts\05_Preimportaciones.sql
+		Scripts\06_SPImportaciones.sql = Scripts\06_SPImportaciones.sql
+		Scripts\07_EjecucionImportaciones.sql = Scripts\07_EjecucionImportaciones.sql
+		Scripts\08_Reportes.sql = Scripts\08_Reportes.sql
+		Scripts\09_Seguridad(Entrega7).sql = Scripts\09_Seguridad(Entrega7).sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredProcedures", "{1BF6DB2F-7827-45C5-B51E-89F14122E07E}"
+	ProjectSection(SolutionItems) = preProject
+		StoredProcedures\01_PersonaSP.sql = StoredProcedures\01_PersonaSP.sql
+		StoredProcedures\02_ObraSocialSP.sql = StoredProcedures\02_ObraSocialSP.sql
+		StoredProcedures\03_SocioSP.sql = StoredProcedures\03_SocioSP.sql
+		StoredProcedures\04_GrupoFamiliarSP.sql = StoredProcedures\04_GrupoFamiliarSP.sql
+		StoredProcedures\05_SaldoCuentaSP.sql = StoredProcedures\05_SaldoCuentaSP.sql
+		StoredProcedures\06_RolSP.sql = StoredProcedures\06_RolSP.sql
+		StoredProcedures\07_UsuarioSP.sql = StoredProcedures\07_UsuarioSP.sql
+		StoredProcedures\08_CostoCategoriaSP.sql = StoredProcedures\08_CostoCategoriaSP.sql
+		StoredProcedures\09_CategoriaSP.sql = StoredProcedures\09_CategoriaSP.sql
+		StoredProcedures\10_CostoActividadDeportivaSP.sql = StoredProcedures\10_CostoActividadDeportivaSP.sql
+		StoredProcedures\11_ActividadDeportivaSP.sql = StoredProcedures\11_ActividadDeportivaSP.sql
+		StoredProcedures\12_RealizaActividadSP.sql = StoredProcedures\12_RealizaActividadSP.sql
+		StoredProcedures\13_ClaseSP.sql = StoredProcedures\13_ClaseSP.sql
+		StoredProcedures\14_AsisteSP.sql = StoredProcedures\14_AsisteSP.sql
+		StoredProcedures\15_JornadaSP.sql = StoredProcedures\15_JornadaSP.sql
+		StoredProcedures\16_TipoActividadSP.sql = StoredProcedures\16_TipoActividadSP.sql
+		StoredProcedures\17_ActividadExtraSP.sql = StoredProcedures\17_ActividadExtraSP.sql
+		StoredProcedures\18_TarifaSP.sql = StoredProcedures\18_TarifaSP.sql
+		StoredProcedures\19_InvitacionEventoSP.sql = StoredProcedures\19_InvitacionEventoSP.sql
+		StoredProcedures\20_FacturaSP.sql = StoredProcedures\20_FacturaSP.sql
+		StoredProcedures\21_NotaDeCreditoSP.sql = StoredProcedures\21_NotaDeCreditoSP.sql
+		StoredProcedures\22_FormaDePagoSP.sql = StoredProcedures\22_FormaDePagoSP.sql
+		StoredProcedures\23_PagoSP.sql = StoredProcedures\23_PagoSP.sql
+		StoredProcedures\24_ReembolsoSP.sql = StoredProcedures\24_ReembolsoSP.sql
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EAB7C72C-B58A-4CA9-852B-C0E78F115576}
+	EndGlobalSection
+EndGlobal
