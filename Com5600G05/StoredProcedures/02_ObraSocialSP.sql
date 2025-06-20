@@ -16,19 +16,22 @@
 USE Com5600G05
 GO
 
-CREATE OR ALTER PROCEDURE CrearObraSocial
-	@nombre VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@telefono VARCHAR(50) -- debe coincidir con la cantidad de caracteres de la tabla
+CREATE OR ALTER PROCEDURE Socio.CrearObraSocial
+	@nombre VARCHAR(40),
+	@telefono VARCHAR(40)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM ObraSocial WHERE nombre = @nombre)
+	IF EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE nombre = @nombre)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);
 		SET @mensajeNombre = 'Ya existe una obra social con el nombre ' + @nombre;
 		THROW 51000, @mensajeNombre, 1;
 	END
 
-	INSERT INTO ObraSocial
+	INSERT INTO Socio.ObraSocial (
+		nombre,
+		telefono
+	)
 	VALUES (
 		@nombre,
 		@telefono
@@ -39,20 +42,20 @@ END
 GO
 
 -- modificar obra social
-CREATE OR ALTER PROCEDURE ModificarObraSocial
+CREATE OR ALTER PROCEDURE Socio.ModificarObraSocial
 	@idObraSocial INT,
-	@nombreNuevo VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@telefonoNuevo VARCHAR(50) -- debe coincidir con la cantidad de caracteres de la tabla
+	@nombreNuevo VARCHAR(40),
+	@telefonoNuevo VARCHAR(40)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM ObraSocial WHERE nombre = @nombre AND idObraSocial <> @idObraSocial)
+	IF EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE nombre = @nombreNuevo AND idObraSocial <> @idObraSocial)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);
-		SET @mensajeNombre = 'Ya existe otra obra social con el nombre ' + @nombre;
+		SET @mensajeNombre = 'Ya existe otra obra social con el nombre ' + @nombreNuevo;
 		THROW 51000, @mensajeNombre, 1;
 	END
 
-	UPDATE ObraSocial
+	UPDATE Socio.ObraSocial
 	SET
 		nombre = @nombreNuevo,
 		telefono = @telefonoNuevo

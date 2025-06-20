@@ -17,13 +17,13 @@ USE Com5600G05
 GO
 
 -- Crear Categoria sin costo (inicialmente mayor, cadete o menor)
-CREATE OR ALTER PROCEDURE CrearCategoriaSinCosto
+CREATE OR ALTER PROCEDURE Socio.CrearCategoriaSinCosto
 	@edadMinima TINYINT,
 	@edadMaxima TINYINT,
-	@nombre VARCHAR(100) -- tiene que coincidir con la cantidad de caracteres en la tabla
+	@nombre VARCHAR(20)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Categoria WHERE nombre = @nombre)
+	IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE nombre = @nombre)
 	BEGIN
 		RAISERROR('Ya existe una categoria con el nombre %s', 10, 1, @nombre);
 	END
@@ -40,36 +40,50 @@ END
 GO
 
 -- crear una categoria y darle un costo con una fecha de vigencia
-CREATE OR ALTER PROCEDURE CrearCategoriaConCostoNuevo
+CREATE OR ALTER PROCEDURE Socio.CrearCategoriaConCostoNuevo
 	@edadMinima TINYINT,
 	@edadMaxima TINYINT,
-	@nombre VARCHAR(100), -- tiene que coincidir con la cantidad de caracteres en la tabla
+	@nombre VARCHAR(20),
 	@fechaVigencia DATE,
 	@precio DECIMAL(10, 2)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Categoria WHERE nombre = @nombre)
-	BEGIN
-		RAISERROR('Ya existe una categoria con el nombre %s', 10, 1, @nombre);
-	END
-	ELSE
-	BEGIN
-		INSERT INTO Categoria
-		VALUES (
-			@edadMinima,
-			@edadMaxima,
-			@nombre
-		);
+	BEGIN TRY
+		BEGIN TRANSACTION
+			IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE nombre = @nombre)
+			BEGIN
+				DECLARE @mensajeNombre VARCHAR(100);
+				SET @mensajeNombre = 'Ya existe una categoria con el nombre ' + @nombre;
+				THROW 51000, @mensajeNombre, 1;
+			END
+			INSERT INTO Socio.Categoria (
+				edadMinima,
+				edadMaxima,
+				nombre
+			)
+			VALUES (
+				@edadMinima,
+				@edadMaxima,
+				@nombre
+			);
 
-		DECLARE @idCategoria INT = SCOPE_IDENTITY();
+			DECLARE @idCategoria INT = SCOPE_IDENTITY();
 
-		INSERT INTO CostoCategoria
-		VALUES (
-			@fechaVigencia,
-			@precio,
-			@idCategoria
-		);
-	END
+			INSERT INTO Socio.CostoCategoria (
+				fechaVigencia,
+				precio,
+				idCategoria
+			)
+			VALUES (
+				@fechaVigencia,
+				@precio,
+				@idCategoria
+			);
+		COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+	END CATCH
 END
 GO
 
@@ -78,17 +92,17 @@ CREATE OR ALTER PROCEDURE ModificarCategoria
 	@idCategoria INT,
 	@edadMinima TINYINT,
 	@edadMaxima TINYINT,
-	@nombre VARCHAR(100)
+	@nombre VARCHAR(20)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Categoria WHERE idCategoria = @idCategoria)
+	IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE idCategoria = @idCategoria)
 	BEGIN
 		DECLARE @mensajeCategoria VARCHAR(100);
 		SET @mensajeCategoria = 'No existe una categoria con el ID ' + CAST(@idCategoria AS varchar);
 		THROW 51000, @mensajeCategoria, 1;
 	END
 
-	IF EXISTS (SELECT 1 FROM Categoria WHERE nombre = @nombre AND idCategoria <> @idCategoria)
+	IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE nombre = @nombre AND idCategoria <> @idCategoria)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);
 		SET @mensajeNombre = 'Ya existe otra categoria de nombre ' + @nombre;
@@ -100,7 +114,7 @@ BEGIN
 		THROW 51000, 'La edad minima debe ser menor a la edad maxima', 1;
 	END
 
-	UPDATE Categoria
+	UPDATE Socio.Categoria
 	SET
 		edadMinima = @edadMinima,
 		edadMaxima = @edadMaxima,

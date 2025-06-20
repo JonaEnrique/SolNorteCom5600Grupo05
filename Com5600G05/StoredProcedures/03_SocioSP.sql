@@ -17,112 +17,112 @@ USE Com5600G05
 GO
 
 -- Crear Rol
-CREATE OR ALTER PROCEDURE CrearSocioConObraSocialExistenteYPersonaExistente
-	@dniPersona INT,
-	@nombreObraSocial VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroObraSocial VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroSocio VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
+CREATE OR ALTER PROCEDURE Socio.CrearSocioConObraSocialExistenteYPersonaExistente
+	@idPersona INT,
+	@idObraSocial INT,
+	@nroObraSocial VARCHAR(30),
+	@nroSocio VARCHAR(10),
 	@debitoAutomatico BIT,
-	@idCategoria INT -- asumo que se selecciona de una lista
+	@cuit VARCHAR(20),
+	@idCategoria INT
 AS
 BEGIN
-	DECLARE @idPersona INT;
-	SET @idPersona = (
-		SELECT idPersona
-		FROM Persona
-		WHERE dni = @dniPersona
-	);
-	IF @idPersona IS NULL
+	IF NOT EXISTS (SELECT 1 FROM Persona.Persona WHERE idPersona = @idPersona)
 	BEGIN
 		DECLARE @mensajePersona VARCHAR(100);
-		SET @mensajePersona = 'No existe una persona con el DNI ' + @dniPersona;
+		SET @mensajePersona = 'No existe una persona con el ID ' + CAST(@idPersona AS VARCHAR);
 		THROW 51000, @mensajePersona, 1;
 	END
 
-	DECLARE @idObraSocial INT;
-	SET @idObraSocial = (
-		SELECT idObraSocial
-		FROM ObraSocial
-		WHERE nombre = @nombreObraSocial
-	);
-	IF @idObraSocial IS NULL
+	IF NOT EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE idObraSocial = @idObraSocial)
 	BEGIN
 		DECLARE @mensajeObraSocial VARCHAR(100);
-		SET @mensajeObraSocial = 'No existe una obra social con el nombre ' + @nombreObraSocial;
+		SET @mensajeObraSocial = 'No existe una obra social con el ID ' + @idObraSocial;
 		THROW 51000, @mensajeObraSocial, 1;
 	END
 
-	INSERT INTO Socio
+	INSERT INTO Socio.Socio (
+		idSocio,
+		nroSocio,
+		idCategoria,
+		idObraSocial,
+		nroObraSocial,
+		cuit
+	)
 	VALUES (
 		@idPersona,
-		@nroObraSocial,
 		@nroSocio,
-		'ACTIVO', -- esto tiene que coincidir con el del check
-		@debitoAutomatico,
+		@idCategoria,
 		@idObraSocial,
-		@idCategoria
+		@nroObraSocial,
+		@cuit
 	);
 END
 GO
 
-CREATE OR ALTER PROCEDURE CrearSocioConPersonaNuevaYObraSocialExistente
+CREATE OR ALTER PROCEDURE Socio.CrearSocioConPersonaNuevaYObraSocialExistente
 	@dni INT,
-	@nombre VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@apellido VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@email VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@cuit VARCHAR(11),
-	@telefono INT,
-	@telefonoEmergencia INT,
+	@nombre VARCHAR(50),
+	@apellido VARCHAR(50),
+	@email VARCHAR(255),
+	@telefono VARCHAR(20),
+	@telefonoEmergencia VARCHAR(20),
 	@fechaNacimiento DATE,
-	@nombreObraSocial VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroObraSocial VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroSocio VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@debitoAutomatico BIT,
-	@idCategoria INT -- asumo que se selecciona de una lista
+	@idObraSocial INT,
+	@nroObraSocial VARCHAR(30),
+	@nroSocio VARCHAR(10),
+	@idCategoria INT,
+	@cuit VARCHAR(20)
 AS
 BEGIN
 	BEGIN TRY
 		BEGIN TRANSACTION
 			DECLARE @idPersona INT;
-			EXEC @idPersona = CrearPersona
+			EXEC @idPersona = Persona.CrearPersona
 				@dni,
 				@nombre,
 				@apellido,
 				@email,
-				@cuit,
 				@telefono,
 				@telefonoEmergencia,
-				@fechaNacimiento;
+				@fechaNacimiento
 
-			DECLARE @idObraSocial INT;
-			SET @idObraSocial = (
-				SELECT idObraSocial
-				FROM ObraSocial
-				WHERE nombre = @nombreObraSocial
-			);
-			IF @idObraSocial IS NULL
+			IF NOT EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE idObraSocial = @idObraSocial)
 			BEGIN
 				DECLARE @mensajeObraSocial VARCHAR(100);
-				SET @mensajeObraSocial = 'No existe una obra social con el nombre ' + @nombreObraSocial;
+				SET @mensajeObraSocial = 'No existe una obra social con el ID ' + CAST(@idObraSocial AS VARCHAR);
 				THROW 51000, @mensajeObraSocial, 1;
 			END
 
-			IF EXISTS (SELECT 1 FROM Socio WHERE nroSocio = @nroSocio)
+			IF EXISTS (SELECT 1 FROM Socio.Socio WHERE nroSocio = @nroSocio)
 			BEGIN
 				DECLARE @mensajeNroSocio VARCHAR(100);
 				SET @mensajeNroSocio = 'Ya existe un socio con el numero ' + @nroSocio;
 				THROW 51000, @mensajeNroSocio, 1;
 			END
 
-			INSERT INTO Socio
+			IF EXISTS (SELECT 1 FROM Socio.Socio WHERE cuit = @cuit)
+			BEGIN
+				DECLARE @mensajeCuit VARCHAR(100);
+				SET @mensajeCuit = 'Ya existe un socio con el cuit ' + @cuit;
+				THROW 51000, @mensajeCuit, 1;
+			END
+
+			INSERT INTO Socio (
+				idSocio,
+				nroSocio,
+				idCategoria,
+				idObraSocial,
+				nroObraSocial,
+				cuit
+			)
 			VALUES (
 				@idPersona,
-				@nroObraSocial,
 				@nroSocio,
-				'ACTIVO', -- esto tiene que coincidir con el del check
-				@debitoAutomatico,
+				@idCategoria,
 				@idObraSocial,
-				@idCategoria
+				@nroObraSocial,
+				@cuit
 			);
 			COMMIT TRANSACTION
 	END TRY
@@ -132,50 +132,54 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE CrearSocioConPersonaYObraSocialNueva
+CREATE OR ALTER PROCEDURE Socio.CrearSocioConPersonaYObraSocialNueva
 	@dni INT,
-	@nombre VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@apellido VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@email VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@cuit VARCHAR(11),
-	@telefono INT,
-	@telefonoEmergencia INT,
+	@nombre VARCHAR(50),
+	@apellido VARCHAR(50),
+	@email VARCHAR(255),
+	@telefono VARCHAR(20),
+	@telefonoEmergencia VARCHAR(20),
 	@fechaNacimiento DATE,
-	@nombreObraSocial VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@telefonoObraSocial VARCHAR(50), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroObraSocial VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroSocio VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@debitoAutomatico BIT,
-	@idCategoria INT -- asumo que se selecciona de una lista
+	@nroObraSocial VARCHAR(30),
+	@nroSocio VARCHAR(10),
+	@idCategoria INT,
+	@cuit VARCHAR(20),
+	@nombreObraSocial VARCHAR(40),
+	@telefonoObraSocial VARCHAR(40)
 AS
 BEGIN
 	BEGIN TRY
 		BEGIN TRANSACTION
 			DECLARE @idPersona INT;
-			EXEC @idPersona = CrearPersona
+			EXEC @idPersona = Persona.CrearPersona
 				@dni,
 				@nombre,
 				@apellido,
 				@email,
-				@cuit,
 				@telefono,
 				@telefonoEmergencia,
 				@fechaNacimiento;
 
 			DECLARE @idObraSocial INT;
-			EXEC @idObraSocial = CrearObraSocial
+			EXEC @idObraSocial = Socio.CrearObraSocial
 				@nombreObraSocial,
 				@telefonoObraSocial;
 
-			INSERT INTO Socio
+			INSERT INTO Socio (
+				idSocio,
+				nroSocio,
+				idCategoria,
+				idObraSocial,
+				nroObraSocial,
+				cuit
+			)
 			VALUES (
 				@idPersona,
-				@nroObraSocial,
 				@nroSocio,
-				'ACTIVO', -- esto tiene que coincidir con el del check
-				@debitoAutomatico,
+				@idCategoria,
 				@idObraSocial,
-				@idCategoria
+				@nroObraSocial,
+				@cuit
 			);
 		COMMIT TRANSACTION
 	END TRY
@@ -186,59 +190,57 @@ END
 GO
 
 -- modificar socio
-CREATE OR ALTER PROCEDURE ModificarSocio
+CREATE OR ALTER PROCEDURE Socio.ModificarSocio
 	@idSocio INT,
 	@nroObraSocial VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroSocio VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@debitoAutomatico BIT,
+	@nroSocio VARCHAR(10), -- debe coincidir con la cantidad de caracteres de la tabla
 	@idCategoria INT -- asumo que se selecciona de una lista
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Socio WHERE idSocio = @idSocio)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
 		DECLARE @mensajeId VARCHAR(100);
 		SET @mensajeId = 'No existe un socio con el id ' + CAST(@idSocio AS VARCHAR);
 		THROW 51000, @mensajeId, 1;
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM Categoria WHERE idCategoria = @idCategoria)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Categoria WHERE idCategoria = @idCategoria)
 	BEGIN
 		DECLARE @mensajeCategoria VARCHAR(100);
 		SET @mensajeCategoria = 'No existe una categoria con el id ' + CAST(@idCategoria AS VARCHAR);
 		THROW 51000, @mensajeCategoria, 1;
 	END
 
-	UPDATE Socio
+	UPDATE Socio.Socio
 	SET
 		nroObraSocial = @nroObraSocial,
 		nroSocio = @nroSocio,
-		debitoAutomatico = @debitoAutomatico,
 		idCategoria = @idCategoria
 	WHERE idSocio = @idSocio;
 END
 GO
 
 -- Modificar Obra Social del Socio
-CREATE OR ALTER PROCEDURE ModificarObraSocialSocio
+CREATE OR ALTER PROCEDURE Socio.ModificarObraSocialSocio
 	@idSocio INT,
 	@idObraSocial INT
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Socio WHERE idSocio = @idSocio)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
 		DECLARE @mensajeId VARCHAR(100);
 		SET @mensajeId = 'No existe un socio con el id ' + CAST(@idSocio AS VARCHAR);
 		THROW 51000, @mensajeId, 1;
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM ObraSocial WHERE idObraSocial = @idObraSocial)
+	IF NOT EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE idObraSocial = @idObraSocial)
 	BEGIN
 		DECLARE @mensajeObraSocial VARCHAR(100);
 		SET @mensajeObraSocial = 'No existe una obra social con el ID ' + CAST(@idObraSocial AS VARCHAR);
 		THROW 51000, @mensajeObraSocial, 1;
 	END
 
-	UPDATE Socio
+	UPDATE Socio.Socio
 	SET idObraSocial = @idObraSocial
 	WHERE idSocio = @idSocio;
 END

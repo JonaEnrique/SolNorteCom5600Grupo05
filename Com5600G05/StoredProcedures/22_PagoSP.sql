@@ -18,24 +18,22 @@ GO
 
 -- Generar un pago
 CREATE OR ALTER PROCEDURE CrearPago
-	@idTransaccion INT,
-	@recargo DECIMAL(10, 2), -- debe tener la misma cantidad de decimales que en la tabla
-	@monto DECIMAL(10, 2), -- debe tener la misma cantidad de decimales que en la tabla
-	@idFormaDePago INT, -- asumo que lo selecciona de una lista
-	@nroFactura VARCHAR(11)
+	@idTransaccion VARCHAR(64),
+	@monto DECIMAL(10, 2),
+	@idFormaPago INT
 AS
 BEGIN
 	BEGIN TRY
 		BEGIN TRANSACTION
-			IF EXISTS (SELECT 1 FROM FormaDePago WHERE idFormaDePago)
+			IF EXISTS (SELECT 1 FROM Pago.FormaPago WHERE idFormaPago = @idFormaPago)
 			BEGIN;
 				THROW 51000, 'La forma de pago seleccionada no existe', 1;
 			END
 
-			IF EXISTS (SELECT 1 FROM Pago WHERE idTransaccion = @idTransaccion)
+			IF EXISTS (SELECT 1 FROM Pago.Pago WHERE idTransaccion = @idTransaccion)
 			BEGIN
 				DECLARE @mensajeTransaccion VARCHAR(100);
-				SET @mensajeTransaccion = 'Ya existe un pago con el codigo de transaccion ' + CAST(@idTransaccion AS VARCHAR);
+				SET @mensajeTransaccion = 'Ya existe un pago con el codigo de transaccion ' + @idTransaccion;
 				THROW 51000, @mensajeTransaccion, 1;
 			END
 
@@ -44,28 +42,17 @@ BEGIN
 				THROW 51000, 'El monto a pagar no puede ser negativo', 1;
 			END
 
-			DECLARE @idFactura INT;
-			SET @idFactura = (
-				SELECT idFactura
-				FROM Factura
-				WHERE nroFactura = @nroFactura
-			);
-
-			IF @idFactura IS NULL
-			BEGIN
-				DECLARE @mensajeFactura VARCHAR(100);
-				SET @mensajeFactura = 'No existe una factura de numero ' + @nroFactura;
-				THROW 51000, @mensajeFactura, 1;
-			END
-
-			INSERT INTO Pago
+			INSERT INTO Pago.Pago (
+				idTransaccion,
+				fecha,
+				monto,
+				idFormaPago
+			)
 			VALUES (
 				@idTransaccion,
 				GETDATE(),
-				@recargo,
 				@monto,
-				@idFormaDePago,
-				@idFactura
+				@idFormaPago
 			);
 		COMMIT TRANSACTION
 	END TRY

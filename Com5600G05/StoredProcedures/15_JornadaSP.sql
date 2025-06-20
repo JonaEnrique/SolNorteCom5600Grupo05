@@ -17,7 +17,7 @@ USE Com5600G05
 GO
 
 -- Crear Jornada
-CREATE OR ALTER PROCEDURE CrearJornada 
+CREATE OR ALTER PROCEDURE Actividad.CrearJornada 
 	@fecha DATE,
 	@llovio BIT
 AS
@@ -25,14 +25,13 @@ BEGIN
 	DECLARE @textoFecha VARCHAR(30);
 	SET @textoFecha = CAST(@fecha AS VARCHAR)
 
-	IF EXISTS (SELECT 1 FROM Jornada WHERE fecha = @fecha)
+	IF EXISTS (SELECT 1 FROM Actividad.Jornada WHERE fecha = @fecha)
 	BEGIN
 		RAISERROR('Ya se cargo la fecha %s.', 10, 1, @textoFecha);
+		RETURN;
 	END
-	ELSE
-	BEGIN
-		INSERT INTO Jornada
-		VALUES (@fecha, @llovio);
-	END
+
+	INSERT INTO Jornada (fecha, huboLluvia)
+	VALUES (@fecha, @llovio);
 END
 GO

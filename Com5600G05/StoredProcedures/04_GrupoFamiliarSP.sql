@@ -16,54 +16,43 @@
 USE Com5600G05
 GO
 
-CREATE OR ALTER PROCEDURE CrearGrupoFamiliar
-	@nroSocioResponsable VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@nroSocioMenor VARCHAR(30) -- debe coincidir con la cantidad de caracteres de la tabla
+CREATE OR ALTER PROCEDURE Socio.CrearGrupoFamiliar
+	@idSocioTutor INT,
+	@idSocioMenor INT,
+	@parentesco VARCHAR(30)
 AS
 BEGIN
-	-- busco el id del responsable
-	DECLARE @idResponsable INT;
-	SET @idResponsable = (
-		SELECT idSocio
-		FROM Socio
-		WHERE nroSocio = @nroSocioResponsable
-	);
-
 	-- si no lo encontre tiro una excepcion
-	IF @idResponsable IS NULL
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioTutor)
 	BEGIN
 		DECLARE @mensajeResponsable VARCHAR(100);
-		SET @mensajeResponsable = 'No existe socio con el numero ' + @nroSocioResponsable;
+		SET @mensajeResponsable = 'No existe socio con el ID ' + CAST(@idSocioTutor AS VARCHAR);
 		THROW 51000, @mensajeResponsable, 1;
 	END
 
 	-- veo la categoria del responsable
-	DECLARE @categoriaResponsable INT;
-	SET @categoriaResponsable = (
+	DECLARE @categoriaTutor INT;
+	SET @categoriaTutor = (
 		SELECT nombre
-		FROM Socio
-		WHERE idSocio = @idResponsable
+		FROM Socio.Categoria
+		WHERE idCategoria = (
+			SELECT idCategoria
+			FROM Socio.Socio
+			WHERE idSocio = @idSocioTutor
+		)
 	);
 
 	-- si no es mayor tiro una excepcion
-	IF NOT @categoriaResponsable = 'MAYOR' -- tiene que coincidir con el check
+	IF NOT @categoriaTutor = 'MAYOR'
 	BEGIN;
 		THROW 51000, 'El responsable debe ser de categoria MAYOR', 1;
 	END
 
-	-- busco el id del menor
-	DECLARE @idMenor INT;
-	SET @idMenor = (
-		SELECT idSocio
-		FROM Socio
-		WHERE nroSocio = @nroSocioMenor
-	);
-
 	-- si no lo encontre tiro una excepcion
-	IF @idMenor IS NULL
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioMenor)
 	BEGIN
 		DECLARE @mensajeMenor VARCHAR(100);
-		SET @mensajeMenor = 'No existe socio con el numero ' + @nroSocioMenor;
+		SET @mensajeMenor = 'No existe socio con el ID  ' + @idSocioMenor;
 		THROW 51000, @mensajeMenor, 1;
 	END
 
@@ -72,36 +61,41 @@ BEGIN
 	DECLARE @categoriaMenor INT;
 	SET @categoriaMenor = (
 		SELECT nombre
-		FROM Socio
-		WHERE idSocio = @idMenor
+		FROM Socio.Categoria
+		WHERE idCategoria = (
+			SELECT idCategoria
+			FROM Socio.Socio
+			WHERE idSocio = @idSocioMenor
+		)
 	);
 
 	-- si no es menor o cadete tiro una excepcion
-	IF @categoriaMenor = 'MAYOR' -- tiene que coincidir con el check
+	IF @categoriaMenor = 'MAYOR'
 	BEGIN;
 		THROW 51000, 'El segundo socio debe ser MENOR o CADETE', 1;
 	END
 
 	-- si son iguales tiro una excepcion
-	IF @idResponsable = @idMenor
+	IF @idSocioTutor = @idSocioMenor
 	BEGIN;
-		THROW 51000, 'El socio no puede ser responsable de si mismo', 1;
+		THROW 51000, 'El socio no puede ser tutor de si mismo', 1;
 	END
 
-	INSERT INTO GrupoFamiliar
+	INSERT INTO GrupoFamiliar (
+		idSocioTutor,
+		idSocioMenor,
+		parentesco
+	)
 	VALUES (
 		@idResponsable,
-		@idMenor
+		@idMenor,
+		@parentesco
 	);
-	
-	-- devuelvo el valor de la ultima entidad añadida a la tabla por si la necesito
-	-- (si no la necesito saco esta linea despues)
-	RETURN SCOPE_IDENTITY();
 END
 GO
 
 -- modificar menor de un grupo familiar
-CREATE OR ALTER PROCEDURE ModificarMenorGrupoFamiliar
+CREATE OR ALTER PROCEDURE Socio.ModificarMenorGrupoFamiliar
 	@idGrupoFamiliar INT, -- supongo que se selecciona de una lista
 	@idSocioMenorNuevo INT
 AS
@@ -136,16 +130,16 @@ BEGIN
 		THROW 51000, 'El socio debe ser de categoria MENOR o CADETE', 1;
 	END
 
-	UPDATE GrupoFamiliar
+	UPDATE Socio.GrupoFamiliar
 	SET idSocioMenor = @idSocioMenorNuevo
 	WHERE idGrupoFamiliar = @idGrupoFamiliar;
 END
 GO
 
--- modificar socio responsable de grupo familiar
-CREATE OR ALTER PROCEDURE ModificarResponsableGrupoFamiliar
+-- modificar socio tutor de grupo familiar
+CREATE OR ALTER PROCEDURE Socio.ModificarResponsableGrupoFamiliar
 	@idGrupoFamiliar INT,
-	@idSocioResponsableNuevo INT
+	@idSocioTutorNuevo INT
 AS
 BEGIN
 	IF NOT EXISTS (SELECT 1 FROM GrupoFamiliar WHERE idGrupoFamiliar = @idGrupoFamiliar)
@@ -155,10 +149,10 @@ BEGIN
 		THROW 51000, @mensajeGrupo, 1;
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM Socio WHERE idSocio = @idSocioResponsableNuevo)
+	IF NOT EXISTS (SELECT 1 FROM Socio WHERE idSocio = @idSocioTutorNuevo)
 	BEGIN
 		DECLARE @mensajeSocio VARCHAR(100);
-		SET @mensajeSocio = 'No existe un socio con el ID ' + CAST(@idSocioResponsableNuevo AS VARCHAR);
+		SET @mensajeSocio = 'No existe un socio con el ID ' + CAST(@idSocioTutorNuevo AS VARCHAR);
 		THROW 51000, @mensajeSocio, 1;
 	END
 
@@ -169,7 +163,7 @@ BEGIN
 		WHERE c.idCategoria = (
 			SELECT s.idCategoria
 			FROM Socio s
-			WHERE s.idSocio = @idSocioResponsableNuevo
+			WHERE s.idSocio = @idSocioTutorNuevo
 		)
 	);
 
@@ -179,7 +173,26 @@ BEGIN
 	END
 
 	UPDATE GrupoFamiliar
-	SET idSocioResponsable = @idSocioResponsableNuevo
+	SET idSocioResponsable = @idSocioTutorNuevo
 	WHERE idGrupoFamiliar = @idGrupoFamiliar;
+END
+GO
+
+-- modificar parentesco
+CREATE OR ALTER PROCEDURE Socio.ModificarParentescoGrupoFamiliar
+	@idGrupoFamiliar INT,
+	@parentescoNuevo VARCHAR(30)
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.GrupoFamiliar WHERE idGrupoFamiliar = @idGrupoFamiliar)
+	BEGIN
+		DECLARE @mensajeGrupo VARCHAR(100);
+		SET @mensajeGrupo = 'No existe un grupo familiar con el ID ' + CAST(@idGrupoFamiliar AS VARCHAR);
+		THROW 51000, @mensajeGrupo, 1;
+	END
+
+	UPDATE Socio.GrupoFamiliar
+	SET parentesco = @parentescoNuevo
+	WHERE idGrupoFamiliar = @idGrupoFamiliar
 END
 GO

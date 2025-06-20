@@ -17,20 +17,23 @@ USE Com5600G05
 GO
 
 -- Crear Rol
-CREATE OR ALTER PROCEDURE CrearRol
+CREATE OR ALTER PROCEDURE Usuario.CrearRol
 	@nombreRol VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
 	@area VARCHAR(100) -- debe coincidir con la cantidad de caracteres de la tabla y con las areas del check
 AS
 BEGIN
 	-- supongo que la combinacion rol y area es unique
-	IF EXISTS (SELECT 1 FROM Rol WHERE nombreRol = @nombreRol AND area = @area)
+	IF EXISTS (SELECT 1 FROM Usuario.Rol WHERE nombre = @nombreRol AND area = @area)
 	BEGIN
 		DECLARE @mensaje VARCHAR(100);
 		SET @mensaje = 'Ya existe el rol ' + @nombreRol + ' en el area ' + @area;
 		THROW 51000, @mensaje, 1;
 	END
 
-	INSERT INTO Rol
+	INSERT INTO Rol (
+		nombre,
+		area
+	)
 	VALUES (
 		@nombreRol,
 		@area
@@ -39,22 +42,23 @@ END
 GO
 
 -- modificar rol
-CREATE OR ALTER PROCEDURE ModificarRol
+CREATE OR ALTER PROCEDURE Usuario.ModificarRol
+	@idRol INT,
 	@nombreRol VARCHAR(100),
 	@area VARCHAR(100)
 AS
 BEGIN
 	-- supongo que la combinacion rol y area es unique
-	IF EXISTS (SELECT 1 FROM Rol WHERE nombreRol = @nombreRol AND area = @area)
+	IF EXISTS (SELECT 1 FROM Usuario.Rol WHERE nombre = @nombreRol AND area = @area)
 	BEGIN
 		DECLARE @mensaje VARCHAR(100);
 		SET @mensaje = 'Ya existe el rol ' + @nombreRol + ' en el area ' + @area;
 		THROW 51000, @mensaje, 1;
 	END
 
-	UPDATE Rol
+	UPDATE Usuario.Rol
 	SET
-		nombreRol = @nombreRol,
+		nombre = @nombreRol,
 		area = @area
 	WHERE idRol = @idRol;
 END

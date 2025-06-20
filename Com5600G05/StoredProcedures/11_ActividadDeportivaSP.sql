@@ -17,48 +17,44 @@ USE Com5600G05
 GO
 
 -- Crear ActividadDeportiva sin costo
-CREATE OR ALTER PROCEDURE CrearActividadDeportivaSinCosto
-	@nombre VARCHAR(100) -- tiene que coincidir con la cantidad de caracteres en la tabla
+CREATE OR ALTER PROCEDURE Actividad.CrearActividadDeportivaSinCosto
+	@nombre VARCHAR(30)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM ActividadDeportiva WHERE nombre = @nombre)
+	IF EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE nombre = @nombre)
 	BEGIN
 		RAISERROR('Ya existe una actividad deportiva con el nombre %s', 10, 1, @nombre);
 	END
 	ELSE
 	BEGIN
-		INSERT INTO ActividadDeportiva
-		VALUES (
-			@nombre
-		);
+		INSERT INTO Actividad.ActividadDeportiva
+		VALUES (@nombre);
 	END
 END
 GO
 
 -- crear una actividad deportiva y darle un costo con una fecha de vigencia
-CREATE OR ALTER PROCEDURE CrearActividadDeportivaConCostoNuevo
-	@nombre VARCHAR(100), -- tiene que coincidir con la cantidad de caracteres en la tabla
+CREATE OR ALTER PROCEDURE Actividad.CrearActividadDeportivaConCostoNuevo
+	@nombre VARCHAR(30),
 	@fechaVigencia DATE,
-	@precio DECIMAL(10, 2) -- tiene que coincidir con los decimales de la tabla
+	@precio DECIMAL(10, 2)
 AS
 BEGIN
 	BEGIN TRY
 		BEGIN TRANSACTION
-			IF EXISTS (SELECT 1 FROM ActividadDeportiva WHERE nombre = @nombre)
+			IF EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE nombre = @nombre)
 			BEGIN
 				DECLARE @mensajeActividadDeportiva VARCHAR(100);
 				SET @mensajeActividadDeportiva = 'Ya existe una actividad deportiva con el nombre ' + @nombre;
 				THROW 51000, @mensajeActividadDeportiva, 1;
 			END
 	
-			INSERT INTO ActividadDeportiva
-			VALUES (
-				@nombre
-			);
+			INSERT INTO Actividad.ActividadDeportiva
+			VALUES (@nombre);
 
 			DECLARE @idActividadDeportiva INT = SCOPE_IDENTITY();
 
-			EXEC CrearCostoActividadDeportiva
+			EXEC Actividad.CrearCostoActividadDeportiva
 				@precio,
 				@fechaVigencia,
 				@idActividadDeportiva;
@@ -73,28 +69,28 @@ END
 GO
 
 -- modificar nombre actividad deportiva
-CREATE OR ALTER PROCEDURE ModificarNombreActividadDeportiva
+CREATE OR ALTER PROCEDURE Actividad.ModificarNombreActividadDeportiva
 	@idActividadDeportiva INT,
 	@nombreNuevo VARCHAR(100)
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM ActividaDeportiva WHERE idActividadDeportiva = @idActividadDeportiva)
+	IF NOT EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE idActividadDeportiva = @idActividadDeportiva)
 	BEGIN
 		DECLARE @mensajeIdActividad VARCHAR(100);
 		SET @mensajeIdActividad = 'No existe una actividad deportiva con el ID ' + CAST(@idActividadDeportiva AS varchar);
 		THROW 51000, @mensajeIdActividad, 1;
 	END
 
-	IF EXISTS (SELECT 1 FROM ActividadDeportiva WHERE nombre = @nombreNuevo AND idActividadDeportiva <> @idActividadDeportiva)
+	IF EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE nombre = @nombreNuevo AND idActividadDeportiva <> @idActividadDeportiva)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);
 		SET @mensajeNombre = 'Ya existe otra actividad deportiva con el nombre ' + @nombreNuevo;
 		THROW 51000, @mensajeNombre, 1;
 	END
 
-	UPDATE ActividaDeportiva
+	UPDATE Actividad.ActividadDeportiva
 	SET nombre = @nombreNuevo
-	WHERE idCategoria = @idCategoria;
+	WHERE idActividadDeportiva = @idActividadDeportiva;
 END
 GO
 

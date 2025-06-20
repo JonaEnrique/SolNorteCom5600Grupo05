@@ -16,38 +16,28 @@
 USE Com5600G05
 GO
 
-CREATE OR ALTER PROCEDURE CrearSaldoCuenta
-	@fecha DATE,
-	@monto DECIMAL(10, 2), -- tiene que coincidir con los decimales de la tabla
-	@nroSocio VARCHAR(30) -- tiene que coincidir con la cantidad de caracteres de la tabla
+CREATE OR ALTER PROCEDURE Pago.CrearSaldoCuenta
+	@monto DECIMAL(10, 2),
+	@idPago INT,
+	@idSocio INT
 AS
 BEGIN
-	DECLARE @idSocio INT;
-	SET @idSocio = (
-		SELECT idSocio
-		FROM Socio
-		WHERE nroSocio = @nroSocio
-	);
-
-	IF @idSocio IS NULL
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
 		DECLARE @mensajeSocio VARCHAR(100);
-		SET @mensajeSocio = 'No existe numero de socio ' + @nroSocio;
+		SET @mensajeSocio = 'No existe ID de socio ' + CAST(@idSocio AS VARCHAR);
 		THROW 51000, @mensajeSocio, 1;
 	END
-
-	DECLARE @idCategoriaSocio INT;
-	SET @idCategoriaSocio = (
-		SELECT idCategoria
-		FROM Socio
-		WHERE idSocio = @idSocio
-	);
 
 	DECLARE @categoriaSocio VARCHAR(10);
 	SET @categoriaSocio = (
 		SELECT nombre
-		FROM Categoria
-		WHERE idCategoria = @idCategoriaSocio
+		FROM Socio.Categoria
+		WHERE idCategoria = (
+			SELECT idCategoria
+			FROM Socio.Socio
+			WHERE idSocio = @idSocio
+		)
 	);
 
 	IF NOT @categoriaSocio = 'MAYOR'
@@ -55,31 +45,43 @@ BEGIN
 		THROW 51000, 'El socio debe ser mayor para tener saldo de cuenta', 1;
 	END
 
-	INSERT INTO SaldoCuenta
+	IF NOT EXISTS (SELECT 1 FROM Pago.Pago WHERE idPago = @idPago)
+	BEGIN
+		DECLARE @mensajePago VARCHAR(100);
+		SET @mensajePago = 'No existe un pago con el ID ' + CAST(@idPago AS VARCHAR);
+		THROW 51000, @mensajePago, 1;
+	END
+
+	INSERT INTO Pago.SaldoDeCuenta (
+		monto,
+		aplicado,
+		idPago,
+		idSocio
+	)
 	VALUES (
-		@fecha,
 		@monto,
 		0, -- se crea sin haber sido usado
+		@idPago,
 		@idSocio
 	);
 END
 GO
 
 -- Modificar estado saldo de cuenta
-CREATE OR ALTER PROCEDURE ModificarEstadoSaldoCuenta
-	@idSaldoCuenta INT,
-	@efectuado BIT
+CREATE OR ALTER PROCEDURE Pago.ModificarEstadoSaldoCuenta
+	@idSaldoDeCuenta INT,
+	@aplicado BIT
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM SaldoCuenta WHERE idSaldoCuenta = @idSaldoCuenta)
+	IF NOT EXISTS (SELECT 1 FROM Pago.SaldoDeCuenta WHERE idSaldoDeCuenta = @idSaldoDeCuenta)
 	BEGIN
 		DECLARE @mensajeSaldo VARCHAR(100);
-		SET @mensajeSaldo = 'No existe un saldo a cuenta con el ID ' + CAST(@idSaldoCuenta AS VARCHAR);
+		SET @mensajeSaldo = 'No existe un saldo a cuenta con el ID ' + CAST(@idSaldoDeCuenta AS VARCHAR);
 		THROW 51000, @mensajeSaldo, 1;
 	END
 
-	UPDATE SaldoCuenta
-	SET efectuado = @efectuado
-	WHERE idSaldoCuenta = @idSaldoCuenta;
+	UPDATE SaldoDeCuenta
+	SET aplicado = @aplicado
+	WHERE idSaldoDeCuenta = @idSaldoDeCuenta;
 END
 GO

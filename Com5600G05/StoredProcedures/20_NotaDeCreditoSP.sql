@@ -16,23 +16,14 @@
 USE Com5600G05
 GO
 
-CREATE OR ALTER PROCEDURE CrearNotaDeCredito
-	@nroComprobante VARCHAR(11),
-	@descripcion VARCHAR(100), -- debe coincidir con la cantidad de caracteres en la tabla
+CREATE OR ALTER PROCEDURE Factura.CrearNotaDeCredito
 	@fechaEmision DATE,
-	@monto DECIMAL(10, 2), -- debe coincidir con la cantidad de decimales en la tabla
-	@motivo VARCHAR(100), -- debe coincidir con la cantidad de caracteres en la tabla
+	@monto DECIMAL(10, 2),
+	@motivo VARCHAR(120),
 	@idFactura INT
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM NotaDeCredito WHERE nroComprobante = @nroComprobante)
-	BEGIN
-		DECLARE @mensajeNroComprobante VARCHAR(100);
-		SET @mensajeNroComprobante = 'Ya existe una nota de credito con el numero de comprobante ' + @nroComprobante;
-		THROW 51000, @mensajeNroComprobante, 1;
-	END
-
-	IF NOT EXISTS (SELECT 1 FROM Factura WHERE idFactura = @idFactura)
+	IF NOT EXISTS (SELECT 1 FROM Factura.Factura WHERE idFactura = @idFactura)
 	BEGIN
 		DECLARE @mensajefactura VARCHAR(100);
 		SET @mensajefactura = 'No existe una factura con el ID ' + CAST(@idFactura AS VARCHAR);
@@ -44,14 +35,16 @@ BEGIN
 		THROW 51000, 'La fecha de emision no puede ser posterior a la fecha de hoy', 1;
 	END
 
-	INSERT INTO NotaDeCredito
+	INSERT INTO Factura.NotaCredito (
+		fechaEmision,
+		monto,
+		motivo,
+		idFactura
+	)
 	VALUES (
-		@descripcion,
 		@fechaEmision,
-		@nroComprobante,
 		@monto,
 		@motivo,
-		'EMITIDO', -- debe coincidir con el check
 		@idFactura
 	);
 END

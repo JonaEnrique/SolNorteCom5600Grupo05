@@ -16,24 +16,17 @@
 USE Com5600G05
 GO
 
--- Crear TipoActividad
-CREATE OR ALTER PROCEDURE CrearInvitacion
-	@importe DECIMAL(10 ,2), -- tiene que coincidir con el DECIMAL de la tabla Tarifa
+-- Crear tarifa
+CREATE OR ALTER PROCEDURE Actividad.CrearTarifa
+	@precio DECIMAL(10 ,2),
 	@fechaVigencia DATE,
-	@idTipoActividad INT, -- asumo que lo selecciono de una lista
-	@duracion VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@edad VARCHAR(30), -- debe coincidir con la cantidad de caracteres de la tabla
-	@tipoCliente VARCHAR(30) -- debe coincidir con la cantidad de caracteres de la tabla
+	@idTipoActividad INT,
+	@actividad VARCHAR(20),
+	@duracion VARCHAR(10),
+	@edad VARCHAR(10),
+	@tipoCliente VARCHAR(10)
 AS
 BEGIN
-	-- verifico que el la actividad seleccionada sea valida
-	IF NOT EXISTS (SELECT 1 FROM TipoActividad WHERE idTipoActividad = @idTipoActividad)
-	BEGIN
-		DECLARE @mensajeActividad VARCHAR(100);
-		SET @mensajeActividad = 'No existe una actividad con el ID ' + CAST(@idActividad AS VARCHAR);
-		THROW 51000, @mensajeActividad, 1;
-	END
-
 	-- verifico que coincidan con los valores validos
 	IF NOT (@duracion = 'DIA' OR @duracion = 'MES' OR @duracion = 'TEMPORADA')
 	BEGIN;
@@ -50,14 +43,30 @@ BEGIN
 		THROW 51000, 'El tipo de cliente debe ser SOCIO o INVITADO', 1;
 	END
 
-	INSERT INTO Tarifa
+	IF NOT (
+		@actividad = 'UsoPileta' OR
+		@actividad = 'Colonia' OR
+		@actividad = 'AlquilerSum'
+	)
+	BEGIN;
+		THROW 51000, 'La actividad debe ser UsoPileta, Colonia o AlquilerSum', 1;
+	END
+
+	INSERT INTO Actividad.Tarifa (
+		precio,
+		fechaVigencia,
+		descripcionActividad,
+		tipoCliente,
+		tipoDuracion,
+		tipoEdad
+	)
 	VALUES (
-		@importe,
+		@precio,
 		@fechaVigencia,
-		@idTipoActividad,
+		@actividad,
+		@tipoCliente,
 		@duracion,
-		@edad,
-		@tipoCliente
+		@edad
 	);
 END
 GO

@@ -16,36 +16,22 @@
 USE Com5600G05
 GO
 
--- Crear Rol
-CREATE OR ALTER PROCEDURE CrearPersona
+-- Crear persona
+CREATE OR ALTER PROCEDURE Persona.CrearPersona
 	@dni INT,
-	@nombre VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@apellido VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@email VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@cuit VARCHAR(11),
-	@telefono INT,
-	@telefonoEmergencia INT,
+	@nombre VARCHAR(50),
+	@apellido VARCHAR(50),
+	@email VARCHAR(255),
+	@telefono VARCHAR(20),
+	@telefonoEmergencia VARCHAR(20),
 	@fechaNacimiento DATE
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Persona WHERE dni = @dni)
+	IF EXISTS (SELECT 1 FROM Persona.Persona WHERE dni = @dni)
 	BEGIN
 		DECLARE @mensajeDni VARCHAR(100);
 		SET @mensajeDni = 'Ya existe una persona con el DNI ' + @dni;
 		THROW 51000, @mensajeDni, 1;
-	END
-
-	IF EXISTS (SELECT 1 FROM Persona WHERE cuit = @cuit)
-	BEGIN
-		DECLARE @mensajeCuit VARCHAR(100);
-		SET @mensajeCuit = 'ya existe una persona con el CUIT ' + @cuit;
-		THROW 51000, @mensajeCuit, 1;
-	END
-
-	DECLARE @dniCUIT INT = CAST(SUBSTRING(@cuit, 3, 8) AS INT);
-	IF NOT (@dni = @dniCUIT)
-	BEGIN;
-		THROW 51000, 'El DNI no coincide con el CUIT', 1;
 	END
 
 	-- esto tal vez deberia ir en una funcion
@@ -54,17 +40,23 @@ BEGIN
 		THROW 51000, 'El formato del email es invalido', 1;
 	END
 
-	INSERT INTO Persona
+	INSERT INTO Persona.Persona (
+		nombre,
+		apellido,
+		fechaNac,
+		dni,
+		telefono,
+		telefonoEmergencia,
+		email
+	)
 	VALUES (
-		@dni,
 		@nombre,
 		@apellido,
-		@email,
-		@cuit,
+		@fechaNacimiento,
+		@dni,
 		@telefono,
 		@telefonoEmergencia,
-		@fechaNacimiento,
-		0
+		@email
 	);
 
 	RETURN SCOPE_IDENTITY();
@@ -72,43 +64,29 @@ END
 GO
 
 -- modificar persona
-CREATE OR ALTER PROCEDURE ModificarPersona
+CREATE OR ALTER PROCEDURE Persona.ModificarPersona
 	@idPersona INT,
 	@dni INT,
-	@nombre VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@apellido VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@email VARCHAR(100), -- debe coincidir con la cantidad de caracteres de la tabla
-	@cuit VARCHAR(11),
-	@telefono INT,
-	@telefonoEmergencia INT,
+	@nombre VARCHAR(50),
+	@apellido VARCHAR(50),
+	@email VARCHAR(255),
+	@telefono VARCHAR(20),
+	@telefonoEmergencia VARCHAR(20),
 	@fechaNacimiento DATE
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Persona WHERE idPersona = @idPersona)
+	IF NOT EXISTS (SELECT 1 FROM Persona.Persona WHERE idPersona = @idPersona)
 	BEGIN
 		DECLARE @mensajeId VARCHAR(100);
 		SET @mensajeId = 'No existe una persona con el ID ' + @idPersona;
 		THROW 51000, @mensajeId, 1;
 	END
 
-	IF EXISTS (SELECT 1 FROM Persona WHERE dni = @dni AND idPersona <> @idPersona)
+	IF EXISTS (SELECT 1 FROM Persona.Persona WHERE dni = @dni AND idPersona <> @idPersona)
 	BEGIN
 		DECLARE @mensajeDni VARCHAR(100);
 		SET @mensajeDni = 'Ya existe otra persona con el DNI ' + @dni;
 		THROW 51000, @mensajeDni, 1;
-	END
-
-	IF EXISTS (SELECT 1 FROM Persona WHERE cuit = @cuit AND idPersona <> @idPersona)
-	BEGIN
-		DECLARE @mensajeCuit VARCHAR(100);
-		SET @mensajeCuit = 'ya existe otra persona con el CUIT ' + @cuit;
-		THROW 51000, @mensajeCuit, 1;
-	END
-
-	DECLARE @dniCUIT INT = CAST(SUBSTRING(@cuit, 3, 8) AS INT);
-	IF NOT (@dni = @dniCUIT)
-	BEGIN;
-		THROW 51000, 'El DNI no coincide con el CUIT', 1;
 	END
 
 	-- esto tal vez deberia ir en una funcion
@@ -117,16 +95,15 @@ BEGIN
 		THROW 51000, 'El formato del email es invalido', 1;
 	END
 
-	UPDATE Persona
+	UPDATE Persona.Persona
 	SET 
 		dni = @dni,
 		nombre = @nombre,
 		apellido = @apellido,
 		email = @email,
-		cuit = @cuit,
 		telefono = @telefono,
 		telefonoEmergencia = @telefonoEmergencia,
-		fechaNacimiento = @fechaNacimiento
+		fechaNac = @fechaNacimiento
 	WHERE idPersona = @idPersona
 END
 GO

@@ -17,7 +17,7 @@ USE Com5600G05
 GO
 
 -- Crear Clase
-CREATE OR ALTER PROCEDURE CrearActividadDeportivaSinCosto
+CREATE OR ALTER PROCEDURE Actividad.CrearActividadDeportivaSinCosto
 	@fecha DATE,
 	@profesor VARCHAR(100), -- tiene que coincidir con la cantidad de caracteres de la tabla
 	@idActividad INT -- asumo que lo selecciono de una lista desplegable
@@ -25,16 +25,19 @@ AS
 BEGIN
 	IF EXISTS (
 		SELECT 1
-		FROM Clase
-		WHERE fecha = @fecha AND profesor = @profesor AND idActividad = @idActividad
+		FROM Actividad.Clase
+		WHERE
+			fecha = @fecha AND
+			profesor = @profesor AND
+			idActividadDeportiva = @idActividad
 	)
 	BEGIN
 		DECLARE @textoFecha VARCHAR(12) = CAST(@fecha AS VARCHAR);
-		DECLARE @nombreActividadDeportiva VARCHAR(100); -- tiene que coincidir con la cantidad de caracteres de la tabla
+		DECLARE @nombreActividadDeportiva VARCHAR(100)
 		SET @nombreActividadDeportiva = (
 			SELECT nombre
-			FROM ActividadDeportiva
-			WHERE idActividad = @idActividad
+			FROM Actividad.ActividadDeportiva
+			WHERE idActividadDeportiva = @idActividad
 		);
 		RAISERROR(
 			'Ya existe una clase en la fecha %s con el profesor %s de la actividad %s', 
@@ -44,7 +47,11 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO Clase
+		INSERT INTO Actividad.Clase (
+			fecha,
+			profesor,
+			idActividadDeportiva
+		)
 		VALUES (
 			@fecha,
 			@profesor,
@@ -54,4 +61,4 @@ BEGIN
 END
 GO
 
--- no se modifica
+-- no se modifica una vez creada

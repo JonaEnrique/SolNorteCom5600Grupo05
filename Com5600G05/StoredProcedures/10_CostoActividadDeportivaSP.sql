@@ -16,10 +16,10 @@
 USE Com5600G05
 GO
 
-CREATE OR ALTER PROCEDURE CrearCostoActividadDeportiva
-	@precio DECIMAL(10, 2), -- debe coincidir con la cantidad de decimales de la tabla
+CREATE OR ALTER PROCEDURE Actividad.CrearCostoActividadDeportiva
+	@precio DECIMAL(10, 2),
 	@fechaVigencia DATE,
-	@idActividadDeportiva INT -- seleccionada de una lista
+	@idActividadDeportiva INT
 AS
 BEGIN
 	IF @precio <= 0
@@ -28,14 +28,18 @@ BEGIN
 	END
 
 	-- verifico que exista el ID de la actividad seleccionada
-	IF NOT EXISTS (SELECT 1 FROM ActividadDeportiva WHERE idActividad = @idActividadDeportiva)
+	IF NOT EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE idActividadDeportiva = @idActividadDeportiva)
 	BEGIN
 		DECLARE @mensajeActividad VARCHAR(100);
 		SET @mensajeActividad = 'No existe actividad deportiva con el ID ' + CAST(@idActividadDeportiva AS VARCHAR);
 		THROW 51000, @mensajeActividad, 1;
 	END
 
-	INSERT INTO CostoActividadDeportiva
+	INSERT INTO Actividad.CostoActividadDeportiva (
+		precio,
+		fechaVigencia,
+		idActividadDeportiva
+	)
 	VALUES (
 		@precio,
 		@fechaVigencia,
@@ -43,4 +47,4 @@ BEGIN
 	);
 END
 
--- no se modifica, se hace una nueva
+-- no se modifica, se hace uno nuevo

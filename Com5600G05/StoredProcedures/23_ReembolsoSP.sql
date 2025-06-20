@@ -19,7 +19,7 @@ GO
 CREATE OR ALTER PROCEDURE CrearReembolso
 	@monto DECIMAL(10, 2), -- debe coincidir con los decimales de la tabla
 	@motivo VARCHAR(100),
-	@idTransaccionPago INT
+	@idPago INT
 AS
 BEGIN
 	IF @monto <= 0
@@ -27,26 +27,32 @@ BEGIN
 		THROW 51000, 'El monto debe ser positivo', 1;
 	END
 
-	DECLARE @idPago INT;
-	DECLARE @montoPago DECIMAL(10, 2); -- debe coincidir con los decimales de la tabla
+	DECLARE @montoPago DECIMAL(10, 2);
 
-	SELECT @idPago = p.idPago, @montoPago = p.monto
-	FROM Pago AS p
-	WHERE p.idTransaccion = @idTransaccionPago;
-
-	IF @idPago IS NULL
+	IF NOT EXISTS (SELECT 1 FROM Pago.Pago WHERE idPago = @idPago)
 	BEGIN
 		DECLARE @mensajePago VARCHAR(100);
-		SET @mensajePago = 'No se encontro un pago con el codigo de transaccion ' + CAST(@idTransaccion AS VARCHAR);
+		SET @mensajePago = 'No se encontro un pago con el ID ' + CAST(@idPago AS VARCHAR);
 		THROW 51000, @mensajePago, 1;
 	END
+
+	SET @monto = (
+		SELECT monto
+		FROM Pago.Pago
+		WHERE idPago = @idPago
+	);
 
 	IF @monto > @montoPago
 	BEGIN;
 		THROW 51000, 'El reembolso no puede superar el monto del pago', 1;
 	END
 
-	INSERT INTO Reembolso
+	INSERT INTO Pago.Reembolso (
+		fecha,
+		monto,
+		motivo,
+		idPago
+	)
 	VALUES (
 		GETDATE(),
 		@monto,

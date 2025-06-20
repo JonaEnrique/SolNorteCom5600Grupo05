@@ -17,60 +17,55 @@ USE Com5600G05
 GO
 
 -- Crear Clase
-CREATE OR ALTER PROCEDURE AsignarActividadASocio
-	@idActividad INT, -- asumo que lo selecciono de una lista desplegable
-	@nroSocio INT
+CREATE OR ALTER PROCEDURE Actividad.AsignarActividadASocio
+	@idActividadDeportiva INT,
+	@idSocio INT
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Socio WHERE nroSocio = @nroSocio)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
-		RAISERROR('No existe un socio con el numero %d', 10, 1, @nroSocio);
+		RAISERROR('No existe un socio con el ID %d', 10, 1, @idSocio);
 		RETURN;
 	END
-	IF NOT EXISTS (SELECT 1 FROM ActividadDeportiva WHERE idActividad = @idActividad)
+	IF NOT EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE idActividadDeportiva = @idActividadDeportiva)
 	BEGIN
-		RAISERROR('No existe una actividad deportiva con el ID %d', 10 ,1 , @idActividad);
+		RAISERROR('No existe una actividad deportiva con el ID %d', 10 ,1 , @idActividadDeoortiva);
 		RETURN;
 	END
 
-	-- consigo el id del socio usando el nro de socio
-	DECLARE @idSocio INT;
-	SET @idSocio = (
-		SELECT idSocio
-		FROM Socio.Socio
-		WHERE nroSocio = @nroSocio
-	);
-
-	INSERT INTO RealizaActividad
+	INSERT INTO Actividad.SocioRealizaActividad (
+		idSocio,
+		idActividadDeportiva
+	)
 	VALUES (
 		@idSocio,
-		@idActividad
+		@idActividadDeportiva
 	);
 END
 GO
 
 -- modificar realiza actividad
-CREATE OR ALTER PROCEDURE ModificarRealizaActividad
+CREATE OR ALTER PROCEDURE Actividad.ModificarRealizaActividad
 	@idRealizaActividad INT,
 	@idActividad INT,
 	@idSocio INT
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM RealizaActividad WHERE idRealizaActividad = @idRealizaActividad)
+	IF NOT EXISTS (SELECT 1 FROM Actividad.SocioRealizaActividad WHERE idRelacion = @idRealizaActividad)
 	BEGIN
 		DECLARE @mensajeId VARCHAR(100);
 		SET @mensajeId = 'No existe una relacion de realiza actividad con el ID ' + CAST(@idRealizaActividad AS varchar);
 		THROW 51000, @mensajeId, 1;
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM Actividad WHERE idActividad = @idActividad)
+	IF NOT EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE idActividadDeportiva = @idActividad)
 	BEGIN
 		DECLARE @mensajeIdActividad VARCHAR(100);
 		SET @mensajeIdActividad = 'No existe una actividad deportiva con el ID ' + CAST(@idActividad AS VARCHAR);
 		THROW 51000, @mensajeIdActividad, 1;
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM Socio WHERE idSocio = @idSocio)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
 		DECLARE @mensajeSocio VARCHAR(100);
 		SET @mensajeSocio = 'No existe un socio con el ID ' + CAST(@idSocio AS VARCHAR);
@@ -79,10 +74,10 @@ BEGIN
 
 	IF EXISTS (
 		SELECT 1
-		FROM RealizaActividad
+		FROM Actividad.SocioRealizaActividad
 		WHERE
-			idRealizaActividad <> @idRealizaActividad AND
-			idActividad = @idActividad AND
+			idRelacion <> @idRealizaActividad AND
+			idActividadDeportiva = @idActividad AND
 			idSocio = @idSocio
 	)
 	BEGIN
@@ -92,10 +87,10 @@ BEGIN
 		THROW 51000, @mensajeRealiza, 1;
 	END
 
-	UPDATE RealizaActividad
+	UPDATE Actividad.SocioRealizaActividad
 	SET
-		idActividad = @idActividad,
+		idActividadDeportiva = @idActividad,
 		idSocio = @idSocio
-	WHERE idRealizaActividad = @idRealizaActividad;
+	WHERE idRelacion = @idRealizaActividad;
 END
 GO

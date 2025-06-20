@@ -17,45 +17,28 @@ USE Com5600G05
 GO
 
 -- Crear Factura
-CREATE OR ALTER PROCEDURE CrearFactura
-	@nroFactura VARCHAR(11),
+CREATE OR ALTER PROCEDURE Factura.CrearFactura
+	@puntoDeVenta CHAR(4),
 	@tipoFactura CHAR(1),
-	@descripcion VARCHAR(100), -- esto creo que quedo de mas
-	@condicionIVA VARCHAR(30), -- debe tener la misma cantidad de caracteres que en la tabla
+	@tipoItem VARCHAR(30),
 	@fechaEmision DATE,
-	@cuit CHAR(11),
-	@montoIVA DECIMAL(10, 2), -- debe tener los mismos decimales que en la tabla
-	@total DECIMAL(10, 2), -- debe tener los mismos decimales que en la tabla
-	@nroSocio VARCHAR(30) -- debe tener la misma cantidad de caracteres que en la tabla
+	@subtotal DECIMAL(10, 2),
+	@porcentajeIva DECIMAL(4, 2),
+	@idSocio INT,
+	@idPago INT
 AS
 BEGIN
-	-- checkeo que no se haya cargado ya la factura
-	IF EXISTS (SELECT 1 FROM Factura WHERE nroFactura = @nroFactura)
-	BEGIN
-		DECLARE @mensajeNroFactura VARCHAR(100);
-		SET @mensajeNroFactura = 'Ya existe una factura con el numero ' + @nroFactura;
-		THROW 51000, @mensajeNroFactura, 1;
-	END
-
 	-- checkeo que el tipo de factura sea valido
 	IF NOT (@tipoFactura = 'A' OR @tipoFactura = 'B' OR @tipoFactura = 'C')
 	BEGIN;
 		THROW 51000, 'El tipo de factura debe ser A, B o C', 1;
 	END
 
-	-- busco el id del numero de socio
-	DECLARE @idSocio INT;
-	SET @idSocio = (
-		SELECT idSocio
-		FROM Socio
-		WHERE nroSocio = @nroSocio
-	);
-
-	-- si no existe tiro una excepcion
-	IF @idSocio IS NULL
+	-- si no existe el socio tiro una excepcion
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
 		DECLARE @mensajeSocio VARCHAR(100);
-		SET @mensajeSocio = 'No existe un socio con el numero ' + @nroSocio;
+		SET @mensajeSocio = 'No existe un socio con el ID ' + @idSocio;
 		THROW 51000, @mensajeSocio, 1;
 	END
 
@@ -63,10 +46,10 @@ BEGIN
 	DECLARE @categoria INT;
 	SET @categoria = (
 		SELECT c.nombre
-		FROM Categoria c
+		FROM Socio.Categoria c
 		WHERE c.idCategoria = (
 			SELECT s.idCategoria
-			FROM Socio s
+			FROM Socio.Socio s
 			WHERE s.idSocio = @idSocio
 		)
 	);
@@ -83,20 +66,27 @@ BEGIN
 		THROW 51000, 'La fecha de emision no puede ser posterior a la fecha de hoy', 1;
 	END
 
-	INSERT INTO Factura
+	INSERT INTO Factura.Factura (
+		puntoDeVenta,
+		tipoFactura,
+		tipoItem,
+		fechaEmision,
+		subtotal,
+		porcentajeIva,
+		estado,
+		idSocio,
+		idPago
+	)
 	VALUES (
-		@nroFactura,
+		@puntoDeVenta,
 		@tipoFactura,
-		@descripcion,
-		@condicionIVA,
+		@tipoItem,
 		@fechaEmision,
-		DATEADD(DAY, 5, @fechaEmision),
-		DATEADD(DAY, 10, @fechaEmision),
-		@cuit,
-		@montoIVA,
-		@total,
-		'PENDIENTE',
-		@idSocio
+		@subtotal,
+		@porcentajeIva,
+		'Pendiente',
+		@idSocio,
+		@idPago
 	);
 
 	-- creo que necesito esto para pago
@@ -105,19 +95,19 @@ END
 GO
 
 -- actualizar estado de una factura
-CREATE OR ALTER PROCEDURE ActualizarEstadoFactura
+CREATE OR ALTER PROCEDURE Factura.ActualizarEstadoFactura
 	@idFactura INT,
-	@estadoNuevo VARCHAR(30) -- debe coincidir con la cantidad de caracteres de la tabla
+	@estadoNuevo VARCHAR(15)
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Factura WHERE idFactura = @idFactura)
+	IF NOT EXISTS (SELECT 1 FROM Factura.Factura WHERE idFactura = @idFactura)
 	BEGIN
 		DECLARE @mensajeFactura VARCHAR(100);
 		SET @mensajeFactura = 'No existe una factura de ID ' + CAST(@idFactura AS VARCHAR);
 		THROW 51000, @mensajeFactura, 1;
 	END
 
-	IF NOT (@estadoNuevo = 'PAGADA' OR @estadoNuevo = 'CANCELADA' OR @estadoNuevo = 'PAGADA VENCIDA')
+	IF NOT (@estadoNuevo = 'Pagada' OR @estadoNuevo = 'Cancelada' OR @estadoNuevo = 'Pagada Vencida')
 	BEGIN;
 		THROW 51000, 'El estado nuevo debe ser PAGADA, CANCELADA o PAGADA VENCIDA', 1;
 	END

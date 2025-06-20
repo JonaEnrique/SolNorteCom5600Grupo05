@@ -17,16 +17,32 @@ USE Com5600G05
 GO
 
 CREATE OR ALTER PROCEDURE CrearFormaDePago
-	@nombre VARCHAR(100)
+	@nombre VARCHAR(50)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM FormaDePago WHERE nombre = @nombre)
+	IF EXISTS (SELECT 1 FROM Pago.FormaPago WHERE nombre = @nombre)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);
 		SET @mensajeNombre = 'Ya existe una forma de pago con el nombre' + @nombre;
 		THROW 51000, @mensajeNombre, 1;
 	END
 
-	INSERT INTO FormaDePago VALUES (@nombre);
+	INSERT INTO Pago.FormaPago VALUES (@nombre);
+END
+GO
+
+CREATE OR ALTER PROCEDURE ModificarFormaDePago
+	@idFormaPago INT,
+	@nombreNuevo VARCHAR(50)
+AS
+BEGIN
+	IF EXISTS (SELECT 1 FROM Pago.FormaPago WHERE nombre = @nombreNuevo AND idFormaPago <> @idFormaPago)
+	BEGIN
+		DECLARE @mensajeNombre VARCHAR(100);
+		SET @mensajeNombre = 'Ya existe otra forma de pago con el nombre' + @nombreNuevo;
+		THROW 51000, @mensajeNombre, 1;
+	END
+
+	UPDATE Pago.FormaPago SET nombre = @nombreNuevo;
 END
 GO

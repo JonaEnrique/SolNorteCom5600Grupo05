@@ -17,19 +17,23 @@ USE Com5600G05
 GO
 
 -- crear costo de categoria y asociarlo a una categoria existente
-CREATE OR ALTER PROCEDURE CrearCostoCategoria
+CREATE OR ALTER PROCEDURE Socio.CrearCostoCategoria
 	@fechaVigencia DATE,
 	@precio DECIMAL(10, 2),
-	@idCategoria INT -- asumo que lo selecciono de una lista desplegable
+	@idCategoria INT
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Categoria WHERE idCategoria = @idCategoria)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Categoria WHERE idCategoria = @idCategoria)
 	BEGIN
 		RAISERROR('No existe una categoria con el ID %d', 10, 1, @idCategoria);
 	END
 	ELSE
 	BEGIN
-		INSERT INTO CostoCategoria
+		INSERT INTO CostoCategoria (
+			fechaVigencia,
+			precio,
+			idCategoria
+		)
 		VALUES (
 			@fechaVigencia,
 			@precio,
