@@ -107,3 +107,39 @@ BEGIN
 	WHERE idPersona = @idPersona
 END
 GO
+
+-- Elimina persona
+
+CREATE OR ALTER PROCEDURE Persona.EliminarPersona
+	@idPersona INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Persona.Persona WHERE idPersona = @idPersona)
+	BEGIN;
+		THROW 51000, 'La persona que se intento eliminar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Usuario.Usuario WHERE idPersona = @idPersona)
+	BEGIN;
+		THROW 51000, 'La persona que se intento eliminar tiene por lo menos un usuario asociado', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idPersona)
+	BEGIN;
+		THROW 51000, 'La persona que se intento eliminar tiene un socio asociado', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.InvitacionEvento WHERE idInvitado = @idPersona)
+	BEGIN;
+		PRINT('La persona a eliminar se encuentra registrada como invitado, se hara un borrado logico');
+
+		UPDATE Persona.Persona
+		SET borrado = 1
+		WHERE idPersona = @idPersona;
+		RETURN;
+	END
+
+	DELETE FROM Persona.Persona
+	WHERE idPersona = @idPersona;
+END
+GO

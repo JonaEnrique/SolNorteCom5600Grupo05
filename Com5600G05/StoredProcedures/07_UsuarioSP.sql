@@ -103,3 +103,18 @@ BEGIN
 	WHERE idUsuario = @idUsuario;
 END
 GO
+
+-- eliminar usuario
+CREATE OR ALTER PROCEDURE Usuario.EliminarUsuario
+	@idUsuario INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Usuario.Usuario WHERE idUsuario = @idUsuario)
+	BEGIN;
+		THROW 51000, 'El usuario que se intento eliminar no existe', 1;
+	END
+
+	DELETE FROM Usuario.Usuario
+	WHERE idUsuario = @idUsuario;
+END
+GO

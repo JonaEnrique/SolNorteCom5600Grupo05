@@ -122,3 +122,28 @@ BEGIN
 	WHERE idCategoria = @idCategoria;
 END
 GO
+
+
+-- eliminar categoria
+-- tambien elimina los costos que tiene asociado
+CREATE OR ALTER PROCEDURE Socio.EliminarCategoria
+	@idCategoria INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.Categoria WHERE idCategoria = @idCategoria)
+	BEGIN;
+		THROW 51000, 'La categoria que se intento borrar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idCategoria = @idCategoria)
+	BEGIN;
+		THROW 51000, 'La categoria que se intento eliminar tiene socios asociados', 1;
+	END
+
+	DELETE FROM Socio.CostoCategoria
+	WHERE idCategoria = @idCategoria;
+
+	DELETE FROM Socio.Categoria
+	WHERE idCategoria = @idCategoria;
+END
+GO

@@ -62,3 +62,24 @@ BEGIN
 	WHERE idObraSocial = @idObraSocial
 END
 GO
+
+-- Eliminando Obra social
+
+CREATE OR ALTER PROCEDURE Socio.EliminarObraSocial
+@idObraSocial INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE idObraSocial = @idObraSocial)
+	BEGIN;
+		THROW 51000, 'La obra social que se intento eliminar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idObraSocial = @idObraSocial)
+	BEGIN;
+		THROW 51000, 'La obra social que se intento eliminar esta asociada a por lo menos un Socio', 1;
+	END
+
+	DELETE FROM Socio.ObraSocial
+	WHERE idObraSocial = @idObraSocial;
+END
+GO

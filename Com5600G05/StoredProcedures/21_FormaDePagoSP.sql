@@ -46,3 +46,23 @@ BEGIN
 	UPDATE Pago.FormaPago SET nombre = @nombreNuevo;
 END
 GO
+
+-- eliminar forma de pago
+CREATE OR ALTER PROCEDURE Pago.EliminarFormaDePago
+	@idFormaDePago INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Pago.FormaPago WHERE idFormaPago = @idFormaDePago)
+	BEGIN;
+		THROW 51000, 'La forma de pago que se intento eliminar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Pago.Pago WHERE idFormaPago = @idFormaDePago)
+	BEGIN;
+		THROW 51000, 'Existe al menos un pago con la forma de pago que se intento eliminar', 1;
+	END
+
+	DELETE FROM Pago.FormaPago
+	WHERE idFormaPago = @idFormaDePago;
+END
+GO

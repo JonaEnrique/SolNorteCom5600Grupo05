@@ -245,3 +245,74 @@ BEGIN
 	WHERE idSocio = @idSocio;
 END
 GO
+
+-- Eliminar socio
+
+CREATE OR ALTER PROCEDURE Socio.EliminarSocio
+	@idSocio INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
+	BEGIN;
+		THROW 51000, 'El socio que se intento eliminar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Factura.Factura WHERE idSocio = @idSocio)
+	BEGIN
+		PRINT('El socio que se intento eliminar tiene facturas asociadas, se borrara logicamente');
+		UPDATE Socio.Socio
+		SET borrado = 1
+		WHERE idSocio = @idSocio;
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.Asiste WHERE idSocio = @idSocio)
+	BEGIN
+		PRINT('El socio que se intento eliminar tiene asistencias registradas, se borrara logicamente');
+		UPDATE Socio.Socio
+		SET borrado = 1
+		WHERE idSocio = @idSocio;
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.SocioRealizaActividad WHERE idSocio = @idSocio)
+	BEGIN
+		PRINT('El socio que se intento eliminar realiza al menos una actividad, se borrara logicamente');
+		UPDATE Socio.Socio
+		SET borrado = 1
+		WHERE idSocio = @idSocio;
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.ActividadExtra WHERE idSocio = @idSocio)
+	BEGIN
+		PRINT('El socio que se intento eliminar esta registrado en una actividad extra, se borrara logicamente');
+		UPDATE Socio.Socio
+		SET borrado = 1
+		WHERE idSocio = @idSocio;
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.InvitacionEvento WHERE idInvitado = @idSocio)
+	BEGIN
+		PRINT('El socio que se intento eliminar esta registrado en una en una invitacion, se borrara logicamente');
+		UPDATE Socio.Socio
+		SET borrado = 1
+		WHERE idSocio = @idSocio;
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM Socio.GrupoFamiliar WHERE idSocioTutor = @idSocio)
+	BEGIN;
+		THROW 51000, 'El socio que se intento eliminar es tutor en un grupo familiar', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Socio.GrupoFamiliar WHERE idSocioMenor = @idSocio)
+	BEGIN;
+		THROW 51000, 'El socio que se intento eliminar es menor en un grupo familiar', 1;
+	END
+
+	DELETE FROM Socio.Socio
+	WHERE idSocio = @idSocio;
+END
+GO

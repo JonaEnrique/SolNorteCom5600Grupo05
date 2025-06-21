@@ -95,3 +95,34 @@ END
 GO
 
 -- el costo se modifica asignandole uno nuevo en costo actividad deportiva
+
+-- eliminar actividad deportiva
+-- tiene borrado logico si hay clases asociadas
+-- no lo permite si hay relaciones SocioRealizaActividad
+CREATE OR ALTER PROCEDURE Actividad.ActividadDeportiva
+	@idActividadDeportiva INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE idActividadDeportiva = @idActividadDeportiva)
+	BEGIN;
+		THROW 51000, 'La actividad deportiva que se quiso borrar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.Clase WHERE idActividadDeportiva = @idActividadDeportiva)
+	BEGIN
+		PRINT('La actividad tiene clases registradas, se borrarra logicamente');
+		UPDATE Actividad.ActividadDeportiva
+		SET borrado = 1
+		WHERE idActividadDeportiva = @idActividadDeportiva;
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.SocioRealizaActividad WHERE idActividadDeportiva = @idActividadDeportiva)
+	BEGIN;
+		THROW 51000, 'La actividad que se intento eliminar tiene socios asociados', 1;
+	END
+
+	DELETE FROM Actividad.ActividadDeportiva
+	WHERE idActividadDeportiva = @idActividadDeportiva;
+END
+GO

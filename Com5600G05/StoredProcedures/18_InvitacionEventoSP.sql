@@ -53,3 +53,31 @@ BEGIN
 	);
 END
 GO
+
+-- eliminar invitacion a evento
+-- solo se elimina si la fecha de hoy es anterior a la fecha de la invitacion
+CREATE OR ALTER PROCEDURE Actividad.EliminarInvitacionEvento
+	@idInvitacion INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Actividad.InvitacionEvento WHERE idInvitacion = @idInvitacion)
+	BEGIN;
+		THROW 51000, 'La invitacion que se intento borrar no existe', 1;
+	END
+
+	DECLARE @fechaInvitacion DATE;
+	SET @fechaInvitacion = (
+		SELECT fechaInvitacion
+		FROM Actividad.InvitacionEvento
+		WHERE idInvitacion = @idInvitacion
+	);
+
+	IF GETDATE() >= @fechaInvitacion
+	BEGIN;
+		THROW 51000, 'La fecha de la invitacion es anterior al dia de hoy', 1;
+	END
+
+	DELETE FROM Actividad.InvitacionEvento
+	WHERE idInvitacion = @idInvitacion;
+END
+GO

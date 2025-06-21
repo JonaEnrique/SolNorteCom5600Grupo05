@@ -85,3 +85,19 @@ BEGIN
 	WHERE idSaldoDeCuenta = @idSaldoDeCuenta;
 END
 GO
+
+-- Eliminar saldo en cuenta
+
+CREATE OR ALTER PROCEDURE Pago.EliminarSaldoDeCuenta
+	@idSaldoDeCuenta INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Pago.SaldoDeCuenta WHERE idSaldoDeCuenta = @idSaldoDeCuenta)
+	BEGIN;
+		THROW 51000, 'El saldo de cuenta que se intento borrar no existe', 1;
+	END
+
+	DELETE FROM Pago.SaldoDeCuenta
+	WHERE idSaldoDeCuenta = @idSaldoDeCuenta;
+END
+GO

@@ -196,3 +196,19 @@ BEGIN
 	WHERE idGrupoFamiliar = @idGrupoFamiliar
 END
 GO
+
+-- Eliminar Grupo familiar
+
+CREATE OR ALTER PROCEDURE Socio.EliminarGrupoFamiliar
+	@idGrupoFamiliar INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.GrupoFamiliar WHERE idGrupoFamiliar = @idGrupoFamiliar)
+	BEGIN;
+		THROW 51000, 'El grupo familiar que se intento eliminar no existe', 1;
+	END
+
+	DELETE FROM Socio.GrupoFamiliar
+	WHERE idGrupoFamiliar = @idGrupoFamiliar;
+END
+GO

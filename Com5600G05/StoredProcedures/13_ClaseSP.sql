@@ -62,3 +62,24 @@ END
 GO
 
 -- no se modifica una vez creada
+
+-- eliminar clase
+-- solo la borra si no tiene asistencias registradas
+CREATE OR ALTER PROCEDURE Actividad.EliminarClase
+	@idClase INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Actividad.Clase WHERE idClase = @idClase)
+	BEGIN;
+		THROW 51000, 'La clase que se intento eliminar no existe', 1;
+	END
+
+	IF EXISTS (SELECT 1 FROM Actividad.Asiste WHERE idClase = @idClase)
+	BEGIN;
+		THROW 51000, 'La clase que se intento eliminar tiene asistencias registradas', 1;
+	END
+
+	DELETE FROM Actividad.Clase
+	WHERE idClase = @idClase;
+END
+GO
