@@ -24,8 +24,7 @@ CREATE OR ALTER PROCEDURE Factura.CrearFactura
 	@fechaEmision DATE,
 	@subtotal DECIMAL(10, 2),
 	@porcentajeIva DECIMAL(4, 2),
-	@idSocio INT,
-	@idPago INT
+	@idSocio INT
 AS
 BEGIN
 	-- checkeo que el tipo de factura sea valido
@@ -55,7 +54,7 @@ BEGIN
 	);
 
 	-- si no es mayor tiro una excepcion
-	IF NOT @categoria = 'MAYOR'
+	IF NOT @categoria = 'Mayor'
 	BEGIN;
 		THROW 51000, 'El socio asociado a una factura debe ser de categoria MAYOR', 1;
 	END
@@ -74,8 +73,7 @@ BEGIN
 		subtotal,
 		porcentajeIva,
 		estado,
-		idSocio,
-		idPago
+		idSocio
 	)
 	VALUES (
 		@puntoDeVenta,
@@ -85,8 +83,7 @@ BEGIN
 		@subtotal,
 		@porcentajeIva,
 		'Pendiente',
-		@idSocio,
-		@idPago
+		@idSocio
 	);
 
 	-- creo que necesito esto para pago

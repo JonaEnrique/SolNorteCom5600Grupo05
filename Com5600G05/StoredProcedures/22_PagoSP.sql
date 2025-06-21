@@ -20,11 +20,19 @@ GO
 CREATE OR ALTER PROCEDURE CrearPago
 	@idTransaccion VARCHAR(64),
 	@monto DECIMAL(10, 2),
-	@idFormaPago INT
+	@idFormaPago INT,
+	@idFactura INT
 AS
 BEGIN
 	BEGIN TRY
 		BEGIN TRANSACTION
+			IF NOT EXISTS (SELECT 1 FROM Factura.Factura WHERE idFactura = @idFactura)
+			BEGIN
+				DECLARE @mensajeFactura VARCHAR(100);
+				SET @mensajeFactura = 'No existe una factura con el ID ' + CAST(@idFactura AS VARCHAR);
+				THROW 51000, @mensajeFactura, 1;
+			END
+
 			IF EXISTS (SELECT 1 FROM Pago.FormaPago WHERE idFormaPago = @idFormaPago)
 			BEGIN;
 				THROW 51000, 'La forma de pago seleccionada no existe', 1;
@@ -46,13 +54,15 @@ BEGIN
 				idTransaccion,
 				fecha,
 				monto,
-				idFormaPago
+				idFormaPago,
+				idFactura
 			)
 			VALUES (
 				@idTransaccion,
 				GETDATE(),
 				@monto,
-				@idFormaPago
+				@idFormaPago,
+				@idFactura
 			);
 		COMMIT TRANSACTION
 	END TRY
