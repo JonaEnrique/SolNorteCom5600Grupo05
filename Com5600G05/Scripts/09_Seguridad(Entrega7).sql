@@ -1,51 +1,45 @@
+/*
+    ---------------------------------------------------------------------
+    -Fecha: 20/06/2025
+    -Grupo: 05
+    -Materia: Bases de Datos Aplicada
+
+    - Integrantes:
+        - Nicolás Pérez       | 40015709
+        - Santiago Sánchez    | 42281463
+        - Jonathan Enrique    | 43301711
+        - Teo Turri           | 42819058
+
+    - Consigna: 
+        Cifrar los datos de los empleados y crear los roles de los mismos. 
+    ---------------------------------------------------------------------
+*/
+
+
 USE Com5600G05						
 GO
 
-IF NOT EXISTS (
+
+INSERT INTO Usuario.Rol (nombre, area)
+SELECT v.nombre, v.area
+FROM (VALUES
+    ('Jefe de Tesorería',               'Tesorería'),
+    ('Administrativo de Cobranza',       'Tesorería'),
+    ('Administrativo de Morosidad',      'Tesorería'),
+    ('Administrativo de Facturacion',    'Tesorería'),
+    ('Administrativo Socio',             'Socios'),
+    ('Socios web',                       'Socios'),
+    ('presidente',                       'Autoridades'),
+    ('vicepresidente',                   'Autoridades'),
+    ('secretario',                       'Autoridades'),
+    ('vocales',                          'Autoridades')
+) AS v(nombre, area)
+WHERE NOT EXISTS (
     SELECT 1
-    FROM sys.tables
-    WHERE name = 'Rol'
-      AND schema_id = SCHEMA_ID('dbo')
-)
-BEGIN
-    CREATE TABLE dbo.Rol (
-        idRol       INT IDENTITY(1,1) PRIMARY KEY,
-        nombreRol   VARCHAR(50) NOT NULL UNIQUE,
-        area        VARCHAR(100) NOT NULL
-        CONSTRAINT CK_Rol_Area CHECK (area IN ('Tesorería','Socios','Autoridades'))
-    );
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'Jefe de Tesorería')
-    INSERT INTO Rol (nombreRol, area) VALUES ('Jefe de Tesorería', 'Tesorería');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'Administrativo de Cobranza')
-    INSERT INTO Rol (nombreRol, area) VALUES ('Administrativo de Cobranza', 'Tesorería');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'Administrativo de Morosidad')
-    INSERT INTO Rol (nombreRol, area) VALUES ('Administrativo de Morosidad', 'Tesorería');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'Administrativo de Facturacion')
-    INSERT INTO Rol (nombreRol, area) VALUES ('Administrativo de Facturacion', 'Tesorería');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'Administrativo Socio')
-    INSERT INTO Rol (nombreRol, area) VALUES ('Administrativo Socio', 'Socios');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'Socios web')
-    INSERT INTO Rol (nombreRol, area) VALUES ('Socios web', 'Socios');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'presidente')
-    INSERT INTO Rol (nombreRol, area) VALUES ('presidente', 'Autoridades');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'vicepresidente')
-    INSERT INTO Rol (nombreRol, area) VALUES ('vicepresidente', 'Autoridades');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'secretario')
-    INSERT INTO Rol (nombreRol, area) VALUES ('secretario', 'Autoridades');
-
-IF NOT EXISTS (SELECT 1 FROM Rol WHERE nombreRol = 'vocales')
-    INSERT INTO Rol (nombreRol, area) VALUES ('vocales', 'Autoridades');
+    FROM Usuario.Rol r
+    WHERE r.nombre = v.nombre
+      AND r.area   = v.area
+);
 GO
 
 
@@ -55,10 +49,24 @@ IF NOT EXISTS (
     WHERE name = 'Empleado'
       AND schema_id = SCHEMA_ID('dbo')
 )
-BEGIN
-    CREATE TABLE dbo.Empleado (
-        idPersona INT PRIMARY KEY IDENTITY(1,1),
 
+
+
+
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Persona')
+    EXEC('CREATE SCHEMA Persona');
+GO
+
+
+IF NOT EXISTS (
+    SELECT 1
+      FROM sys.tables
+     WHERE name = 'Empleado'
+       AND schema_id = SCHEMA_ID('Persona')
+)
+BEGIN
+    CREATE TABLE Persona.Empleado (
+        idPersona           INT IDENTITY(1,1) PRIMARY KEY,
         legajo              VARBINARY(MAX) NOT NULL,
         nombre              VARBINARY(MAX) NOT NULL,
         apellido            VARBINARY(MAX) NOT NULL,
@@ -67,9 +75,9 @@ BEGIN
         telefono            VARBINARY(MAX) NOT NULL,
         telefonoEmergencia  VARBINARY(MAX) NOT NULL,
         email               VARBINARY(MAX) NOT NULL,
-
-        idRol INT NOT NULL,
-        CONSTRAINT FK_Empleado_Rol FOREIGN KEY (idRol) REFERENCES Rol(idRol)
+        idRol               INT NOT NULL,
+     
+        FOREIGN KEY (idRol) REFERENCES Usuario.Rol(idRol)
     );
 END;
 GO
@@ -111,7 +119,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE validarEmpleado
+CREATE OR ALTER PROCEDURE Persona.ValidarEmpleado
   @legajo              VARCHAR(20),			
   @nombre              VARCHAR(50),
   @apellido            VARCHAR(50),
@@ -203,8 +211,8 @@ END;
 GO
 
 
---Falta agregar Esquema Usuario.
-CREATE OR ALTER PROCEDURE insertarEmpleado
+
+CREATE OR ALTER PROCEDURE Persona.InsertarEmpleado
 	@legajo VARCHAR(20),
 	@nombre VARCHAR(50),
 	@apellido VARCHAR(50),
@@ -263,8 +271,7 @@ END;
 GO
 
 
---Falta agregar Esquema Usuario.
-CREATE OR ALTER PROCEDURE actualizarEmpleado
+CREATE OR ALTER PROCEDURE Persona.ActualizarEmpleado
 	  @idPersona            INT,
 	  @legajo               VARCHAR(20),
 	  @nombre               VARCHAR(50),
@@ -307,8 +314,8 @@ BEGIN
 END;
 GO
 
---Falta agregar Esquema Usuario.
-CREATE OR ALTER PROCEDURE borrarEmpleado
+
+CREATE OR ALTER PROCEDURE Persona.BorrarEmpleado
 	@idPersona INT
 AS
 BEGIN
@@ -320,11 +327,11 @@ BEGIN
 		RAISERROR('Error en borrarEmpleado: %s', 16, 1, @errorMensaje);
 		RETURN;
 	END CATCH
-END
+END;
 GO
 
---Falta agregar Esquema Usuario.
-CREATE OR ALTER PROCEDURE obtenerEmpleados
+
+CREATE OR ALTER PROCEDURE Persona.ObtenerEmpleados
 AS
 BEGIN
 
@@ -357,6 +364,6 @@ BEGIN
 		RAISERROR('Error en obtenerEmpleados: %s', 16, 1, @errorMensaje);
 		RETURN;
 	END CATCH
-END
+END;
 GO
 
