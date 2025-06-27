@@ -38,7 +38,7 @@ GO
 
 -- eliminar jornada
 -- solo se borran si no tienen una actividad extra asociada
-CREATE OR ALTER PROCEDURE Actividad.Jornada
+CREATE OR ALTER PROCEDURE Actividad.EliminarJornada
 	@idJornada INT
 AS
 BEGIN
@@ -47,7 +47,7 @@ BEGIN
 		THROW 51000, 'La jornada que se intento eliminar no existe', 1;
 	END
 
-	IF EXISTS (SELECT 1 FROM Actividad.ActividadExtra WHERE idJornada = @idJornada)
+	IF EXISTS (SELECT 1 FROM Actividad.ActividadExtra WHERE Actividad.ActividadExtra.idJornada = @idJornada)
 	BEGIN;
 		THROW 51000, 'La jornada que se intento eliminar tiene actividades extra asociadas', 1;
 	END

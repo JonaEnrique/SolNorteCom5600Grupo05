@@ -25,7 +25,7 @@ AS
 BEGIN
 	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
 	BEGIN
-		RAISERROR('No existe un socio con el ID %d', 10, 1, @nroSocio);
+		RAISERROR('No existe un socio con el ID %d', 10, 1, @idSocio);
 		RETURN;
 	END
 	

@@ -29,7 +29,7 @@ BEGIN
 	END
 	IF NOT EXISTS (SELECT 1 FROM Actividad.ActividadDeportiva WHERE idActividadDeportiva = @idActividadDeportiva)
 	BEGIN
-		RAISERROR('No existe una actividad deportiva con el ID %d', 10 ,1 , @idActividadDeoortiva);
+		RAISERROR('No existe una actividad deportiva con el ID %d', 10 ,1 , @idActividadDeportiva);
 		RETURN;
 	END
 

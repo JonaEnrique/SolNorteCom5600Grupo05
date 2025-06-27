@@ -27,7 +27,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO Actividad.ActividadDeportiva
+		INSERT INTO Actividad.ActividadDeportiva(nombre)
 		VALUES (@nombre);
 	END
 END
@@ -49,7 +49,7 @@ BEGIN
 				THROW 51000, @mensajeActividadDeportiva, 1;
 			END
 	
-			INSERT INTO Actividad.ActividadDeportiva
+			INSERT INTO Actividad.ActividadDeportiva(nombre)
 			VALUES (@nombre);
 
 			DECLARE @idActividadDeportiva INT = SCOPE_IDENTITY();
@@ -99,7 +99,7 @@ GO
 -- eliminar actividad deportiva
 -- tiene borrado logico si hay clases asociadas
 -- no lo permite si hay relaciones SocioRealizaActividad
-CREATE OR ALTER PROCEDURE Actividad.ActividadDeportiva
+CREATE OR ALTER PROCEDURE Actividad.EliminarActividadDeportiva
 	@idActividadDeportiva INT
 AS
 BEGIN

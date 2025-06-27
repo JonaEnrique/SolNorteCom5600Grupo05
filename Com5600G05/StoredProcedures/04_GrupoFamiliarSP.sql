@@ -87,8 +87,8 @@ BEGIN
 		parentesco
 	)
 	VALUES (
-		@idResponsable,
-		@idMenor,
+		@idSocioTutor,
+		@idSocioMenor,
 		@parentesco
 	);
 END
@@ -173,7 +173,7 @@ BEGIN
 	END
 
 	UPDATE GrupoFamiliar
-	SET idSocioResponsable = @idSocioTutorNuevo
+	SET idSocioTutor = @idSocioTutorNuevo
 	WHERE idGrupoFamiliar = @idGrupoFamiliar;
 END
 GO
