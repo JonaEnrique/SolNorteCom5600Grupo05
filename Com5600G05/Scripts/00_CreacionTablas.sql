@@ -157,7 +157,7 @@ GO
 -- *************** CREACIÓN DE TABLAS *************** --
 
 CREATE TABLE Usuario.Rol (
-    idRol   INT IDENTITY PRIMARY KEY,
+    idRol   INT IDENTITY(1,1) PRIMARY KEY,
     nombre  VARCHAR(50) NOT NULL,
     area    VARCHAR(50) NOT NULL,
 
@@ -185,7 +185,7 @@ CREATE TABLE Usuario.Rol (
 GO
 
 CREATE TABLE Persona.Persona (
-    idPersona           INT IDENTITY PRIMARY KEY,
+    idPersona           INT IDENTITY(1,1) PRIMARY KEY,
     nombre              VARCHAR(50)     NOT NULL,
     apellido            VARCHAR(50)     NOT NULL,
     fechaNac            DATE,    --Deberia ser NOT NULL pero hay una fecha que es 10/19/1981 en el archivo
@@ -216,7 +216,7 @@ GO
 
 
 CREATE TABLE Usuario.Usuario (
-    idUsuario             INT IDENTITY PRIMARY KEY,
+    idUsuario             INT IDENTITY(1,1) PRIMARY KEY,
     nombre                VARCHAR(30)     NOT NULL,
     contraseña            VARCHAR(64)     NOT NULL,
     fechaUltimaRenovacion DATE            NOT NULL,
@@ -245,7 +245,7 @@ CREATE TABLE Usuario.Usuario (
 GO
 
 CREATE TABLE Socio.ObraSocial (
-	idObraSocial	INT IDENTITY PRIMARY KEY, 
+	idObraSocial	INT IDENTITY(1,1) PRIMARY KEY, 
 	nombre			VARCHAR(40) UNIQUE NOT NULL,
 	telefono		VARCHAR(40) NOT NULL,
 
@@ -256,12 +256,12 @@ CREATE TABLE Socio.ObraSocial (
 GO
 
 CREATE TABLE Socio.Categoria (
-    idCategoria INT IDENTITY PRIMARY KEY,
+    idCategoria INT IDENTITY(1,1) PRIMARY KEY,
     nombre      VARCHAR(20) UNIQUE NOT NULL,
     edadMinima  TINYINT    NULL,
     edadMaxima  TINYINT    NULL,
 
-    CHECK (TRIM(nombre) <> '' AND nombre NOT LIKE '%[^A-Za-z]%'),
+    CHECK (nombre IN ('Menor', 'Cadete', 'Mayor')),
     CHECK (edadMinima IS NULL OR edadMinima >= 0),
     CHECK (edadMaxima IS NULL OR edadMaxima >= 0),
     CHECK (
@@ -292,7 +292,7 @@ CREATE TABLE Socio.Socio (
 GO
 
 CREATE TABLE Socio.GrupoFamiliar (
-    idGrupoFamiliar   INT IDENTITY PRIMARY KEY,
+    idGrupoFamiliar   INT IDENTITY(1,1) PRIMARY KEY,
     idSocioTutor      INT           NOT NULL,
     idSocioMenor      INT           NOT NULL,
     parentesco        VARCHAR(30)   DEFAULT NULL,
@@ -313,7 +313,7 @@ CREATE TABLE Socio.GrupoFamiliar (
 GO
 
 CREATE TABLE Socio.CostoCategoria (
-    idCostoCategoria        INT IDENTITY PRIMARY KEY,
+    idCostoCategoria        INT IDENTITY(1,1) PRIMARY KEY,
     fechaVigencia           DATE            NOT NULL,
     precio                  DECIMAL(10,2)   NOT NULL,
     idCategoria    INT             NOT NULL,
@@ -326,16 +326,17 @@ GO
 
 
 CREATE TABLE Actividad.ActividadDeportiva (
-	idActividadDeportiva	INT IDENTITY PRIMARY KEY,
+	idActividadDeportiva	INT IDENTITY(1,1) PRIMARY KEY,
 	nombre					VARCHAR(30) UNIQUE NOT NULL,
 	borrado				BIT NOT NULL DEFAULT 0,
-	CHECK (TRIM(nombre) <> '' AND nombre NOT LIKE '%[^A-Za-z ]%')
+
+	CHECK (nombre IN ('Vóley', 'Futsal', 'Taekwondo', 'Baile artístico', 'Natación', 'Ajedrez'))
 );
 GO
 
 
 CREATE TABLE Actividad.CostoActividadDeportiva (
-    idCostoActividadDeportiva INT IDENTITY PRIMARY KEY,
+    idCostoActividadDeportiva INT IDENTITY(1,1) PRIMARY KEY,
     fechaVigencia             DATE            NOT NULL,
     precio                    DECIMAL(10,2)   NOT NULL,
     idActividadDeportiva      INT             NOT NULL,
@@ -348,7 +349,7 @@ GO
 
 
 CREATE TABLE Actividad.Clase (
-    idClase                 INT IDENTITY PRIMARY KEY,
+    idClase                 INT IDENTITY(1,1) PRIMARY KEY,
     fecha                   DATE            NOT NULL,
     profesor                VARCHAR(100)    NOT NULL,
     idActividadDeportiva    INT             NOT NULL,
@@ -361,7 +362,7 @@ GO
 
 
 CREATE TABLE Actividad.SocioRealizaActividad (
-    idRelacion               INT IDENTITY PRIMARY KEY,
+    idRelacion               INT IDENTITY(1,1) PRIMARY KEY,
     idSocio                  INT NOT NULL,
     idActividadDeportiva     INT NOT NULL,
 
@@ -374,7 +375,7 @@ GO
 
 
 CREATE TABLE Actividad.Asiste (
-    idAsistencia INT IDENTITY PRIMARY KEY,
+    idAsistencia INT IDENTITY(1,1) PRIMARY KEY,
     idSocio      INT           NOT NULL,
     idClase      INT           NOT NULL,
     asistencia   VARCHAR(2)       NOT NULL,
@@ -389,7 +390,7 @@ GO
 
 --Mas alla de que no se presentan tarifas de Colonia o AlquilerSum, la tabla lo contempla
 CREATE TABLE Actividad.Tarifa (
-    idTarifa               INT             IDENTITY PRIMARY KEY,
+    idTarifa               INT             IDENTITY(1,1) PRIMARY KEY,
     precio                 DECIMAL(10,2)   NOT NULL,
     fechaVigencia          DATE            NOT NULL,
 
@@ -411,14 +412,15 @@ CREATE TABLE Actividad.Tarifa (
 GO
 
 CREATE TABLE Actividad.Jornada(
-	idJornada INT IDENTITY PRIMARY KEY,
+	idJornada INT IDENTITY(1,1) PRIMARY KEY,
 	fecha DATE NOT NULL UNIQUE,
 	huboLluvia BIT NOT NULL
 );
 GO
 
+
 CREATE TABLE Actividad.ActividadExtra (
-    idActividadExtra		INT             IDENTITY PRIMARY KEY,
+    idActividadExtra		INT             IDENTITY(1,1) PRIMARY KEY,
     descripcionActividad    VARCHAR(20)     NOT NULL,
     fechaInicio				DATE            NOT NULL,
     fechaFin				DATE            NOT NULL,
@@ -435,7 +437,7 @@ GO
 
 
 CREATE TABLE Actividad.InvitacionEvento (
-    idInvitacion       INT IDENTITY PRIMARY KEY,
+    idInvitacion       INT IDENTITY(1,1) PRIMARY KEY,
     fechaInvitacion    DATE      NOT NULL,
     idInvitado         INT       NOT NULL,
     idActExtra         INT       NOT NULL,
@@ -449,12 +451,14 @@ GO
 
 
 CREATE TABLE Pago.FormaPago (
-	idFormaPago		INT IDENTITY PRIMARY KEY,
+	idFormaPago		INT IDENTITY(1,1) PRIMARY KEY,
 	nombre			VARCHAR(50) NOT NULL,
 
 	CHECK ( nombre IN ( 'efectivo', 'Visa','MasterCard','Tarjeta Naranja','Pago Facil','Rapipago','Transferencia Mercado Pago')),
 );
 GO
+
+
 
 CREATE TABLE Factura.Factura (
     idFactura          INT    IDENTITY(1,1) PRIMARY KEY,
@@ -478,10 +482,8 @@ CREATE TABLE Factura.Factura (
                         ) PERSISTED,
     estado             VARCHAR(15)  NOT NULL DEFAULT 'Pendiente',
     idSocio            INT          NOT NULL,
-   --idPago             INT          NULL,
 
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
-    --FOREIGN KEY (idPago)  REFERENCES Pago.Pago(idPago),
 
     CHECK (tipoFactura IN ('A','B','C','E','M')),
     CHECK (tipoItem IN (
@@ -500,8 +502,38 @@ CREATE TABLE Factura.Factura (
 );
 GO
 
+CREATE TABLE Factura.DetalleFactura (
+    idDetalleFactura        INT           IDENTITY(1,1) PRIMARY KEY,
+	idFactura				INT			  NOT NULL,
+    descripcion             VARCHAR(30)   NOT NULL,
+    montoBase               DECIMAL(10,2) NOT NULL,
+    porcentajeDescuento     INT           NULL,
+    motivoDescuento         VARCHAR(100)  NULL,
+    porcentajeRecargo       INT           NULL,
+	motivoRecargo			VARCHAR(100)  NULL,
+    montoFinalParaFactura   AS 
+        ROUND(
+            montoBase 
+            * (100 - ISNULL(porcentajeDescuento, 0)) 
+            / 100.0
+        , 2)
+    PERSISTED,
+    montoFinalConRecargo    AS 
+        ROUND(
+            
+            montoBase 
+            * (100 - ISNULL(porcentajeDescuento, 0)) / 100.0
+            * (100 + ISNULL(porcentajeRecargo, 0)) / 100.0
+        , 2)
+    PERSISTED,
+
+	FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura)
+);
+GO
+
+
 CREATE TABLE Pago.Pago (
-    idPago           INT           IDENTITY PRIMARY KEY,
+    idPago           INT           IDENTITY(1,1) PRIMARY KEY,
     idTransaccion    VARCHAR(64)   NOT NULL UNIQUE,
     fecha            DATE          NOT NULL,
     monto            DECIMAL(10,2) NOT NULL CHECK (monto > 0),
@@ -521,7 +553,7 @@ GO
 
 
 CREATE TABLE Factura.NotaCredito (
-	idNotaCredito		INT IDENTITY PRIMARY KEY,
+	idNotaCredito		INT IDENTITY(1,1) PRIMARY KEY,
 	fechaEmision		DATE NOT NULL,
 	nroNotaCredito		AS RIGHT('00000000' + CONVERT(VARCHAR(8), idNotaCredito), 8) PERSISTED,
 	monto				decimal(10,2),
@@ -539,7 +571,7 @@ GO
 
 
 CREATE TABLE Pago.Reembolso (
-	idReembolso		INT IDENTITY PRIMARY KEY,
+	idReembolso		INT IDENTITY(1,1) PRIMARY KEY,
 	fecha			DATE NOT NULL,
 	monto			DECIMAL(10, 2) NOT NULL,
 	motivo			VARCHAR(255) NOT NULL,
@@ -555,7 +587,7 @@ GO
 
 
 CREATE TABLE Pago.SaldoDeCuenta (
-	idSaldoDeCuenta	 INT IDENTITY PRIMARY KEY,
+	idSaldoDeCuenta	 INT IDENTITY(1,1) PRIMARY KEY,
 	monto			 DECIMAL(10, 2) NOT NULL,
 	aplicado		 BIT,
 

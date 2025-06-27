@@ -782,7 +782,7 @@ BEGIN
 			AND Asiste.idClase = c.idClase
 		);
 
-
+		
 		
 		WITH InformacionFactura AS (
 			-- 1) Obtiene cada asistencia y el mes de facturación (primer día del mes)
@@ -975,18 +975,7 @@ BEGIN
 
 
 
-		INSERT INTO #tempPagos (idTransaccion, fecha, nroSocio, valor, medioDePago)
-SELECT
-    CAST(CAST([Id de pago] AS DECIMAL(38,0)) AS VARCHAR(32)),
-    fecha,
-    [Responsable de pago],
-    Valor,
-    [Medio de pago]
-FROM OPENROWSET(
-    'Microsoft.ACE.OLEDB.16.0',
-    'Excel 12.0;HDR=YES;IMEX=1;Database=C:\Temp\Datos socios.xlsx',
-    'SELECT * FROM [pago cuotas$]'
-) AS datosExcel;
+
 
 
 		DECLARE @recargo DECIMAL(5,4) = 1.10;
@@ -1052,7 +1041,7 @@ FROM OPENROWSET(
 		ROLLBACK TRANSACTION;
 
 	DROP TABLE #tempPagos;
-	DROP TABLE #NuevasCuotas;
+	DROP TABLE #NuevasFacturas;
 END;
 GO
 
