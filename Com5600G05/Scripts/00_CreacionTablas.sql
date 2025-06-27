@@ -193,7 +193,7 @@ CREATE TABLE Persona.Persona (
     telefono            VARCHAR(20),
     telefonoEmergencia  VARCHAR(20),
     email               VARCHAR(255),
-    
+    borrado				BIT NOT NULL DEFAULT 0,
 
     
     CHECK (dni > 0 AND dni <= 999999999),
@@ -279,6 +279,7 @@ CREATE TABLE Socio.Socio (
     idObraSocial    INT,
     nroObraSocial   VARCHAR(30),
 	cuit			VARCHAR(20)   DEFAULT NULL,
+	borrado				BIT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (idSocio)       REFERENCES Persona.Persona(idPersona),
     FOREIGN KEY (idCategoria)   REFERENCES Socio.Categoria(idCategoria),
@@ -327,7 +328,7 @@ GO
 CREATE TABLE Actividad.ActividadDeportiva (
 	idActividadDeportiva	INT IDENTITY PRIMARY KEY,
 	nombre					VARCHAR(30) UNIQUE NOT NULL,
-
+	borrado				BIT NOT NULL DEFAULT 0,
 	CHECK (TRIM(nombre) <> '' AND nombre NOT LIKE '%[^A-Za-z ]%')
 );
 GO
@@ -409,6 +410,12 @@ CREATE TABLE Actividad.Tarifa (
 );
 GO
 
+CREATE TABLE Actividad.Jornada(
+	idJornada INT IDENTITY PRIMARY KEY,
+	fecha DATE NOT NULL UNIQUE,
+	huboLluvia BIT NOT NULL
+);
+GO
 
 CREATE TABLE Actividad.ActividadExtra (
     idActividadExtra		INT             IDENTITY PRIMARY KEY,
@@ -417,10 +424,10 @@ CREATE TABLE Actividad.ActividadExtra (
     fechaFin				DATE            NOT NULL,
     idSocio					INT             NOT NULL,
 	idTarifa				INT				NOT NULL,
-
+	idJornada				INT				NOT NULL,
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
 	FOREIGN KEY (idTarifa) REFERENCES Actividad.Tarifa(idTarifa),
-
+	FOREIGN KEY (idJornada) REFERENCES Actividad.Jornada(idJornada),
     CHECK (fechaFin >= fechaInicio),
     CHECK (descripcionActividad IN ('UsoPileta', 'Colonia', 'AlquilerSum'))
 );
@@ -563,10 +570,5 @@ CREATE TABLE Pago.SaldoDeCuenta (
 GO
 
 
-CREATE TABLE Actividad.Jornada(
-	idJornada INT IDENTITY PRIMARY KEY,
-	fecha DATE NOT NULL UNIQUE,
-	huboLluvia BIT NOT NULL
-);
-GO
+
 
