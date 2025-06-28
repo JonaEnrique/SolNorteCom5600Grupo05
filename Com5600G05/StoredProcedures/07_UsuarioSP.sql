@@ -41,7 +41,7 @@ BEGIN
 
 	IF NOT EXISTS (SELECT 1 FROM Rol WHERE idRol = @idRol)
 	BEGIN;
-		THROW 51000, 'La el rol seleccionado es invalido', 1;
+		THROW 51000, 'el rol seleccionado es invalido', 1;
 	END
 
 	INSERT INTO Usuario (

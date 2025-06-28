@@ -441,7 +441,7 @@ CREATE TABLE Actividad.InvitacionEvento (
     fechaInvitacion    DATE      NOT NULL,
     idInvitado         INT       NOT NULL,
     idActExtra         INT       NOT NULL,
-
+	--QUE SOCIO LO INVITO
     FOREIGN KEY (idActExtra)  REFERENCES Actividad.ActividadExtra(idActividadExtra),
     FOREIGN KEY (idInvitado)  REFERENCES Persona.Persona(idPersona),
 
@@ -454,7 +454,7 @@ CREATE TABLE Pago.FormaPago (
 	idFormaPago		INT IDENTITY(1,1) PRIMARY KEY,
 	nombre			VARCHAR(50) NOT NULL,
 
-	CHECK ( nombre IN ( 'efectivo', 'Visa','MasterCard','Tarjeta Naranja','Pago Facil','Rapipago','Transferencia Mercado Pago')),
+	CHECK ( nombre IN ( 'efectivo', 'Visa','MasterCard','Tarjeta Naranja','Pago Facil','Rapipago','Transferencia Mercado Pago')),--SERIA PROPICIO SACAR
 );
 GO
 

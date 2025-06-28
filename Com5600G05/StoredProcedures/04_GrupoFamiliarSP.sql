@@ -29,9 +29,13 @@ BEGIN
 		SET @mensajeResponsable = 'No existe socio con el ID ' + CAST(@idSocioTutor AS VARCHAR);
 		THROW 51000, @mensajeResponsable, 1;
 	END
-
+	-- si son iguales tiro una excepcion
+	IF @idSocioTutor = @idSocioMenor
+	BEGIN;
+		THROW 51000, 'El socio no puede ser tutor de si mismo', 1;
+	END
 	-- veo la categoria del responsable
-	DECLARE @categoriaTutor INT;
+	DECLARE @categoriaTutor VARCHAR(30);
 	SET @categoriaTutor = (
 		SELECT nombre
 		FROM Socio.Categoria
@@ -58,7 +62,7 @@ BEGIN
 
 	-- supongo que el segundo socio no puede ser mayor
 	-- busco la categoria del menor
-	DECLARE @categoriaMenor INT;
+	DECLARE @categoriaMenor VARCHAR(30);
 	SET @categoriaMenor = (
 		SELECT nombre
 		FROM Socio.Categoria
@@ -73,12 +77,6 @@ BEGIN
 	IF @categoriaMenor = 'MAYOR'
 	BEGIN;
 		THROW 51000, 'El segundo socio debe ser MENOR o CADETE', 1;
-	END
-
-	-- si son iguales tiro una excepcion
-	IF @idSocioTutor = @idSocioMenor
-	BEGIN;
-		THROW 51000, 'El socio no puede ser tutor de si mismo', 1;
 	END
 
 	INSERT INTO GrupoFamiliar (

@@ -17,40 +17,38 @@ USE Com5600G05
 GO
 
 -- Crear Activida extra
-CREATE OR ALTER PROCEDURE CrearActividadExtra
-	@fechaHoraInicio DATETIME,
-	@fechaHoraFin DATETIME,
-	@nroSocio INT,
-	@tipoActividad INT -- tipo de actividad asumo que se selecciona de una lista desplegable
+CREATE OR ALTER PROCEDURE Actividad.CrearActividadExtra
+	@descrpicionActividad VARCHAR(20),
+	@fechaInicio		  DATE,
+	@fechaFin		      DATE,
+	@idSocio			  INT,
+	@idTarifa             INT,
+	@idJornada			  INT
 AS
 BEGIN
-	-- extraigo la fecha de fechaHoraInicio
-	DECLARE @fechaJornada DATE;
-	SET @fechaJornada = CAST(@fechaHoraInicio AS DATE);
-
-	-- consigo el ID de la jornada con esa fecha
-	DECLARE @idJornada INT;
-	SET @idJornada = (
-		SELECT idJornada
-		FROM Jornada
-		WHERE fecha = @fechaJornada
-	);
-
-	-- consigo el ID del Socio asociado
-	DECLARE @idSocio INT;
-	SET @idSocio = (
-		SELECT idSocio
-		FROM Socio
-		WHERE nroSocio = @nroSocio
-	);
-
+	IF NOT EXISTS (SELECT 1 FROM Socio.Socio S WHERE S.idSocio = @idSocio)
+	BEGIN
+		RAISERROR('NO EXISTE EL ID %d DE SOCIO',16,1,@idSocio);
+	END
+	
+	IF NOT EXISTS (SELECT 1 FROM Actividad.Tarifa T WHERE T.idTarifa = @idTarifa)
+	BEGIN
+		RAISERROR('NO EXISTE EL ID %d DE TARIFA',16,1,@idTarifa);
+	END
+	
+	IF NOT EXISTS (SELECT 1 FROM Actividad.Jornada j WHERE j.idJornada = @idJornada)
+	BEGIN
+		RAISERROR('NO EXISTE EL ID %d DE JORNADA',16,1,@idJornada);
+	END
+	
 	INSERT INTO ActividadExtra
 	VALUES (
-		@fechaHoraInicio,
-		@fechaHoraFin,
-		@idJornada,
-		@idSocio,
-		@tipoActividad
+	@descrpicionActividad,
+	@fechaInicio,
+	@fechaFin,
+	@idSocio,
+	@idTarifa,
+	@idJornada
 	);
 END
 GO

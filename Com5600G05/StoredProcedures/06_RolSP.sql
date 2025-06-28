@@ -48,6 +48,12 @@ CREATE OR ALTER PROCEDURE Usuario.ModificarRol
 	@area VARCHAR(100)
 AS
 BEGIN
+	--NO EXISTE EL ID_ROL INGRESADO
+	IF NOT EXISTS (SELECT 1 FROM Usuario.Rol  R WHERE R.idRol = @idRol )
+	BEGIN
+		RAISERROR('Error: El idRol %d no es válido.', 16, 1, @idRol);
+	END
+
 	-- supongo que la combinacion rol y area es unique
 	IF EXISTS (SELECT 1 FROM Usuario.Rol WHERE nombre = @nombreRol AND area = @area)
 	BEGIN

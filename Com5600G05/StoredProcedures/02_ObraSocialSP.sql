@@ -48,6 +48,10 @@ CREATE OR ALTER PROCEDURE Socio.ModificarObraSocial
 	@telefonoNuevo VARCHAR(40)
 AS
 BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.ObraSocial OS WHERE OS.idObraSocial = @idObraSocial)
+	BEGIN
+		RAISERROR('no existe el idObraSocial %d',16,1,@idObraSocial);
+	END
 	IF EXISTS (SELECT 1 FROM Socio.ObraSocial WHERE nombre = @nombreNuevo AND idObraSocial <> @idObraSocial)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);

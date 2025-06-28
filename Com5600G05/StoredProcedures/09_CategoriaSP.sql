@@ -31,9 +31,10 @@ BEGIN
 	BEGIN
 		INSERT INTO Categoria
 		VALUES (
+			@nombre,
 			@edadMinima,
-			@edadMaxima,
-			@nombre
+			@edadMaxima
+			
 		);
 	END
 END
@@ -52,9 +53,7 @@ BEGIN
 		BEGIN TRANSACTION
 			IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE nombre = @nombre)
 			BEGIN
-				DECLARE @mensajeNombre VARCHAR(100);
-				SET @mensajeNombre = 'Ya existe una categoria con el nombre ' + @nombre;
-				THROW 51000, @mensajeNombre, 1;
+				RAISERROR('Ya existe una categoría con ese nombre', 16, 1);
 			END
 			INSERT INTO Socio.Categoria (
 				edadMinima,
@@ -88,31 +87,32 @@ END
 GO
 
 -- modificar categoria
-CREATE OR ALTER PROCEDURE ModificarCategoria
+CREATE OR ALTER PROCEDURE Socio.ModificarCategoria
 	@idCategoria INT,
 	@edadMinima TINYINT,
 	@edadMaxima TINYINT,
 	@nombre VARCHAR(20)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE idCategoria = @idCategoria)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Categoria WHERE idCategoria = @idCategoria)
 	BEGIN
 		DECLARE @mensajeCategoria VARCHAR(100);
 		SET @mensajeCategoria = 'No existe una categoria con el ID ' + CAST(@idCategoria AS varchar);
 		THROW 51000, @mensajeCategoria, 1;
 	END
+	IF @edadMinima >= @edadMaxima
+	BEGIN;
+		THROW 51000, 'La edad minima debe ser menor a la edad maxima', 1;
+	END
 
-	IF EXISTS (SELECT 1 FROM Socio.Categoria WHERE nombre = @nombre AND idCategoria <> @idCategoria)
+	IF NOT EXISTS (SELECT 1 FROM Socio.Categoria WHERE nombre = @nombre AND idCategoria <> @idCategoria)
 	BEGIN
 		DECLARE @mensajeNombre VARCHAR(100);
 		SET @mensajeNombre = 'Ya existe otra categoria de nombre ' + @nombre;
 		THROW 51000, @mensajeNombre, 1;
 	END
 
-	IF @edadMinima >= @edadMaxima
-	BEGIN;
-		THROW 51000, 'La edad minima debe ser menor a la edad maxima', 1;
-	END
+	
 
 	UPDATE Socio.Categoria
 	SET

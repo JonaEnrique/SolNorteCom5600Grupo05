@@ -16,7 +16,7 @@
 USE Com5600G05
 GO
 
-CREATE OR ALTER PROCEDURE CrearFormaDePago
+CREATE OR ALTER PROCEDURE Pago.CrearFormaDePago
 	@nombre VARCHAR(50)
 AS
 BEGIN
@@ -31,7 +31,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ModificarFormaDePago
+CREATE OR ALTER PROCEDURE Pago.ModificarFormaDePago
 	@idFormaPago INT,
 	@nombreNuevo VARCHAR(50)
 AS

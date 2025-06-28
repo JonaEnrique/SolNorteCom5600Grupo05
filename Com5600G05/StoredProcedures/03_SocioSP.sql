@@ -16,7 +16,7 @@
 USE Com5600G05
 GO
 
--- Crear Rol
+
 CREATE OR ALTER PROCEDURE Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 	@idPersona INT,
 	@idObraSocial INT,
