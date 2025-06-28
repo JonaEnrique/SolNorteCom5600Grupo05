@@ -463,39 +463,23 @@ GO
 CREATE TABLE Factura.Factura (
     idFactura          INT    IDENTITY(1,1) PRIMARY KEY,
     nroFactura         AS RIGHT('00000000' + CONVERT(VARCHAR(8), idFactura), 8) PERSISTED,
+	descripcion		   VARCHAR(30)	NULL DEFAULT NULL,
     puntoDeVenta       CHAR(4)      NOT NULL DEFAULT '0001',
     tipoFactura        CHAR(1)      NOT NULL DEFAULT 'B',
-    tipoItem           VARCHAR(30)  NOT NULL,
 	observaciones	   VARCHAR(100) DEFAULT NULL,
     fechaEmision       DATE         NOT NULL,
     fechaRecargo       AS DATEADD(DAY, 5, fechaEmision)   PERSISTED,
     fechaVencimiento   AS DATEADD(DAY,10, fechaEmision)   PERSISTED,
-    subtotal           DECIMAL(10,2) NOT NULL,
-    porcentajeIva      DECIMAL(4,2)  NOT NULL DEFAULT 0,
-    totalFactura       AS (
-                            subtotal
-                            + CASE 
-                                WHEN tipoFactura = 'A' 
-                                  THEN ROUND(subtotal * porcentajeIva, 2)
-                                ELSE 0
-                              END
-                        ) PERSISTED,
+    totalFactura       DECIMAL(10,2) NULL DEFAULT NULL,
     estado             VARCHAR(15)  NOT NULL DEFAULT 'Pendiente',
     idSocio            INT          NOT NULL,
 
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
 
     CHECK (tipoFactura IN ('A','B','C','E','M')),
-    CHECK (tipoItem IN (
-        'UsoPileta','Cuota','AlquilerSum','Colonia',
-        'Vóley','Futsal','Baile artístico','Natación','Ajedrez', 'Taekwondo'
+    CHECK (descripcion IN (
+        'UsoPileta','Cuota','AlquilerSum','Colonia', 'Actividades Deportivas'
     )),
-    CHECK (subtotal >= 0),
-    CHECK (porcentajeIva BETWEEN 0 AND 1),
-    CHECK (
-        (tipoFactura = 'A' AND porcentajeIva > 0 AND porcentajeIva <= 1)
-     OR (tipoFactura IN ('B','C','M','E') AND porcentajeIva = 0)
-    ),
     CHECK (totalFactura > 0),
     CHECK (estado IN ('Pendiente','Pagada','Pagada Vencida','Cancelada'))
 
@@ -503,31 +487,68 @@ CREATE TABLE Factura.Factura (
 GO
 
 CREATE TABLE Factura.DetalleFactura (
-    idDetalleFactura        INT           IDENTITY(1,1) PRIMARY KEY,
-	idFactura				INT			  NOT NULL,
-    descripcion             VARCHAR(30)   NOT NULL,
-    montoBase               DECIMAL(10,2) NOT NULL,
-    porcentajeDescuento     INT           NULL,
-    motivoDescuento         VARCHAR(100)  NULL,
-    porcentajeRecargo       INT           NULL,
-	motivoRecargo			VARCHAR(100)  NULL,
+    idDetalleFactura        INT             IDENTITY(1,1) PRIMARY KEY,
+    idFactura               INT             NOT NULL,
+    descripcion             VARCHAR(30)     NOT NULL,
+    montoBase               DECIMAL(10,2)   NOT NULL,
+    porcentajeDescuento     INT             NOT NULL DEFAULT 0,
+    motivoDescuento         VARCHAR(100)    NULL,
+    porcentajeRecargo       INT             NOT NULL DEFAULT 0,
+    motivoRecargo           VARCHAR(100)    NULL,
+    porcentajeIVA           DECIMAL(5,2)    NOT NULL DEFAULT 0.00,
+
     montoFinalParaFactura   AS 
         ROUND(
-            montoBase 
-            * (100 - ISNULL(porcentajeDescuento, 0)) 
-            / 100.0
-        , 2)
-    PERSISTED,
-    montoFinalConRecargo    AS 
-        ROUND(
-            
-            montoBase 
-            * (100 - ISNULL(porcentajeDescuento, 0)) / 100.0
-            * (100 + ISNULL(porcentajeRecargo, 0)) / 100.0
+          montoBase
+          * (100.0 - porcentajeDescuento) / 100.0
         , 2)
     PERSISTED,
 
-	FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura)
+    montoFinalConRecargo    AS 
+        ROUND(
+          montoBase
+          * (100.0 - porcentajeDescuento) / 100.0
+          * (100.0 + porcentajeRecargo)  / 100.0
+        , 2)
+    PERSISTED,
+
+    importeIVA              AS 
+        ROUND(
+          montoBase
+          * (100.0 - porcentajeDescuento) / 100.0
+          * (100.0 + porcentajeRecargo)  / 100.0
+          * porcentajeIVA / 100.0
+        , 2)
+    PERSISTED,
+
+    montoFinalConIVA        AS
+        ROUND(
+          montoBase
+          * (100.0 - porcentajeDescuento) / 100.0
+          * (100.0 + porcentajeRecargo)  / 100.0
+          * (1.0 + porcentajeIVA / 100.0)
+        , 2)
+    PERSISTED,
+
+    -- Constraints
+    CONSTRAINT FK_DetalleFactura_Factura
+        FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura),
+    CHECK (descripcion IN (
+        'Cuota', 'Taekwondo', 'Vóley', 'Futsal', 
+        'Natación', 'Baile artístico', 'Ajedrez'
+    )),
+    CHECK (montoBase > 0),
+    CHECK (porcentajeDescuento BETWEEN 0 AND 100),
+    CHECK (
+        (porcentajeDescuento = 0 AND motivoDescuento IS NULL)
+     OR (porcentajeDescuento >  0 AND motivoDescuento IS NOT NULL)
+    ),
+    CHECK (porcentajeRecargo BETWEEN 0 AND 100),
+    CHECK (
+        (porcentajeRecargo = 0 AND motivoRecargo IS NULL)
+     OR (porcentajeRecargo >  0 AND motivoRecargo IS NOT NULL)
+    ),
+    CHECK (porcentajeIVA BETWEEN 0 AND 100)
 );
 GO
 
