@@ -24,7 +24,8 @@ CREATE OR ALTER PROCEDURE Persona.CrearPersona
 	@email VARCHAR(255),
 	@telefono VARCHAR(20),
 	@telefonoEmergencia VARCHAR(20),
-	@fechaNacimiento DATE
+	@fechaNacimiento DATE,
+	@idPersona INT OUTPUT
 AS
 BEGIN
 	IF EXISTS (SELECT 1 FROM Persona.Persona WHERE dni = @dni)
@@ -59,7 +60,7 @@ BEGIN
 		@email
 	);
 
-	RETURN SCOPE_IDENTITY();
+	SET @idPersona = SCOPE_IDENTITY();
 END
 GO
 

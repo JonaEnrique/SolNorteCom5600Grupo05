@@ -272,14 +272,16 @@ CREATE TABLE Socio.Categoria (
 );
 GO
 
+
+
 CREATE TABLE Socio.Socio (
     idSocio         INT           PRIMARY KEY,
-    nroSocio        VARCHAR(10)   NOT NULL,
+    nroSocio        VARCHAR(10)   UNIQUE NOT NULL,
     idCategoria     INT           NOT NULL,
     idObraSocial    INT,
     nroObraSocial   VARCHAR(30),
 	cuit			VARCHAR(20)   DEFAULT NULL,
-	borrado				BIT NOT NULL DEFAULT 0,
+	borrado			BIT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (idSocio)       REFERENCES Persona.Persona(idPersona),
     FOREIGN KEY (idCategoria)   REFERENCES Socio.Categoria(idCategoria),
@@ -403,10 +405,16 @@ CREATE TABLE Actividad.Tarifa (
     CHECK (precio > 0),
     CHECK (descripcionActividad IN ('UsoPileta', 'Colonia', 'AlquilerSum')),
     CHECK (
-        TRIM(descripcionActividad) = 'UsoPileta'
-        AND tipoCliente   IS NOT NULL
-        AND tipoDuracion  IS NOT NULL
-        AND tipoEdad      IS NOT NULL
+        (descripcionActividad = 'UsoPileta'
+			AND tipoCliente   IS NOT NULL AND tipoCliente   IN ('Socio','Invitado')
+			AND tipoDuracion  IS NOT NULL AND tipoDuracion   IN ('Día','Mes', 'Temporada')
+			AND tipoEdad      IS NOT NULL AND tipoEdad   IN ('Adulto','Menor') 
+		)	
+	OR (descripcionActividad IN ('Colonia','AlquilerSum')
+             AND tipoCliente   IS NULL
+             AND tipoDuracion  IS NULL
+             AND tipoEdad      IS NULL 
+		)
     )
 );
 GO
@@ -452,9 +460,9 @@ GO
 
 CREATE TABLE Pago.FormaPago (
 	idFormaPago		INT IDENTITY(1,1) PRIMARY KEY,
-	nombre			VARCHAR(50) NOT NULL,
+	nombre			VARCHAR(50) UNIQUE NOT NULL,
 
-	CHECK ( nombre IN ( 'efectivo', 'Visa','MasterCard','Tarjeta Naranja','Pago Facil','Rapipago','Transferencia Mercado Pago')),--SERIA PROPICIO SACAR
+	CHECK ( nombre IN ( 'efectivo', 'Visa','MasterCard','Tarjeta Naranja','Pago Fácil','Rapipago','Transferencia Mercado Pago')), --Se incluye efectivo, ya que es el medio de pago en el archivo Maestro.
 );
 GO
 
@@ -463,25 +471,25 @@ GO
 CREATE TABLE Factura.Factura (
     idFactura          INT    IDENTITY(1,1) PRIMARY KEY,
     nroFactura         AS RIGHT('00000000' + CONVERT(VARCHAR(8), idFactura), 8) PERSISTED,
-	descripcion		   VARCHAR(30)	NULL DEFAULT NULL,
+
     puntoDeVenta       CHAR(4)      NOT NULL DEFAULT '0001',
-    tipoFactura        CHAR(1)      NOT NULL DEFAULT 'B',
-	observaciones	   VARCHAR(100) DEFAULT NULL,
+    tipoFactura        CHAR(1)      NOT NULL DEFAULT 'C',
     fechaEmision       DATE         NOT NULL,
     fechaRecargo       AS DATEADD(DAY, 5, fechaEmision)   PERSISTED,
     fechaVencimiento   AS DATEADD(DAY,10, fechaEmision)   PERSISTED,
     totalFactura       DECIMAL(10,2) NULL DEFAULT NULL,
-    estado             VARCHAR(15)  NOT NULL DEFAULT 'Pendiente',
+    estado             VARCHAR(15)  NOT NULL DEFAULT 'Borrador',
+
+	fechaPago		   DATE			DEFAULT NULL,
+
     idSocio            INT          NOT NULL,
 
     FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
 
     CHECK (tipoFactura IN ('A','B','C','E','M')),
-    CHECK (descripcion IN (
-        'UsoPileta','Cuota','AlquilerSum','Colonia', 'Actividades Deportivas'
-    )),
+
     CHECK (totalFactura > 0),
-    CHECK (estado IN ('Pendiente','Pagada','Pagada Vencida','Cancelada'))
+    CHECK (estado IN ('Borrador','Emitida','Pagada','Vencida','Cancelada'))
 
 );
 GO
@@ -489,53 +497,47 @@ GO
 CREATE TABLE Factura.DetalleFactura (
     idDetalleFactura        INT             IDENTITY(1,1) PRIMARY KEY,
     idFactura               INT             NOT NULL,
-    descripcion             VARCHAR(30)     NOT NULL,
+    descripcion             VARCHAR(50)     NOT NULL,
     montoBase               DECIMAL(10,2)   NOT NULL,
     porcentajeDescuento     INT             NOT NULL DEFAULT 0,
-    motivoDescuento         VARCHAR(100)    NULL,
-    porcentajeRecargo       INT             NOT NULL DEFAULT 0,
-    motivoRecargo           VARCHAR(100)    NULL,
+    motivoDescuento         VARCHAR(100)    NULL DEFAULT NULL,
     porcentajeIVA           DECIMAL(5,2)    NOT NULL DEFAULT 0.00,
 
-    montoFinalParaFactura   AS 
-        ROUND(
-          montoBase
-          * (100.0 - porcentajeDescuento) / 100.0
-        , 2)
-    PERSISTED,
+	idSocioBeneficiario		INT	NOT NULL,
 
-    montoFinalConRecargo    AS 
-        ROUND(
-          montoBase
-          * (100.0 - porcentajeDescuento) / 100.0
-          * (100.0 + porcentajeRecargo)  / 100.0
-        , 2)
-    PERSISTED,
+	FOREIGN KEY (idSocioBeneficiario) REFERENCES Socio.Socio(idSocio), 
 
-    importeIVA              AS 
-        ROUND(
-          montoBase
-          * (100.0 - porcentajeDescuento) / 100.0
-          * (100.0 + porcentajeRecargo)  / 100.0
-          * porcentajeIVA / 100.0
-        , 2)
-    PERSISTED,
+    montoFinalParaFactura   AS (
+      ROUND(
+        montoBase * (100.0 - porcentajeDescuento) / 100.0
+      , 2)
+    ) PERSISTED,
 
-    montoFinalConIVA        AS
-        ROUND(
-          montoBase
-          * (100.0 - porcentajeDescuento) / 100.0
-          * (100.0 + porcentajeRecargo)  / 100.0
-          * (1.0 + porcentajeIVA / 100.0)
-        , 2)
-    PERSISTED,
+    importeIVA              AS (
+      ROUND(
+        montoBase 
+        * (100.0 - porcentajeDescuento) / 100.0
+        * porcentajeIVA / 100.0
+      , 2)
+    ) PERSISTED,
 
-    -- Constraints
-    CONSTRAINT FK_DetalleFactura_Factura
-        FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura),
+    montoFinalConIVA        AS (
+      ROUND(
+        montoBase 
+        * (100.0 - porcentajeDescuento) / 100.0
+        * (1.0 + porcentajeIVA / 100.0)
+      , 2)
+    ) PERSISTED,
+
+
+    FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura),
+
     CHECK (descripcion IN (
         'Cuota', 'Taekwondo', 'Vóley', 'Futsal', 
-        'Natación', 'Baile artístico', 'Ajedrez'
+        'Natación', 'Baile artístico', 'Ajedrez',
+		'UsoPileta:Socio_Día', 'UsoPileta:Socio_Mes', 
+		'UsoPileta:Socio_Temporada', 'UsoPileta:Invitado',
+		'Colonia', 'AlquilerSUM'
     )),
     CHECK (montoBase > 0),
     CHECK (porcentajeDescuento BETWEEN 0 AND 100),
@@ -543,16 +545,12 @@ CREATE TABLE Factura.DetalleFactura (
         (porcentajeDescuento = 0 AND motivoDescuento IS NULL)
      OR (porcentajeDescuento >  0 AND motivoDescuento IS NOT NULL)
     ),
-    CHECK (porcentajeRecargo BETWEEN 0 AND 100),
-    CHECK (
-        (porcentajeRecargo = 0 AND motivoRecargo IS NULL)
-     OR (porcentajeRecargo >  0 AND motivoRecargo IS NOT NULL)
-    ),
-    CHECK (porcentajeIVA BETWEEN 0 AND 100)
+
+    CHECK (porcentajeIVA = 0.00 OR porcentajeIVA = 21.00 )
 );
 GO
 
-
+--Solo un pago por Factura
 CREATE TABLE Pago.Pago (
     idPago           INT           IDENTITY(1,1) PRIMARY KEY,
     idTransaccion    VARCHAR(64)   NOT NULL UNIQUE,
@@ -577,34 +575,47 @@ CREATE TABLE Factura.NotaCredito (
 	idNotaCredito		INT IDENTITY(1,1) PRIMARY KEY,
 	fechaEmision		DATE NOT NULL,
 	nroNotaCredito		AS RIGHT('00000000' + CONVERT(VARCHAR(8), idNotaCredito), 8) PERSISTED,
-	monto				decimal(10,2),
-	motivo				VARCHAR(120),
-	idFactura			INT,
 	
+	monto				DECIMAL(10,2),
+	motivo				VARCHAR(120),
+
+	tipoNC				VARCHAR(20),
+
+	idFactura			INT NOT NULL UNIQUE,
+
 	FOREIGN KEY(idFactura)  REFERENCES Factura.Factura(idFactura),
 
 	CHECK (monto > 0),
-    CHECK (TRIM(motivo) <> '')
+    CHECK (TRIM(motivo) <> ''),
+	CHECK (tipoNC IN ('AnulacionTotal', 'AnulacionParcial', 'Reembolso'))
 );
 GO
 
 
+CREATE TABLE Factura.NotaDebito (
+
+	idNotaDebito     INT IDENTITY(1,1) PRIMARY KEY,
+	fechaEmision     DATE,
+	nroNotaDebito    AS RIGHT('00000000' + CONVERT(VARCHAR(8), idNotaDebito), 8) PERSISTED,
+	tipoND			 VARCHAR(20) NOT NULL DEFAULT 'Recargo',
+
+	montoBase        DECIMAL(10,2) NOT NULL,
+	porcentajeIVA    DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
+
+	importeIVA       AS ROUND(montoBase * porcentajeIVA/100.0, 2) PERSISTED,
+	totalNotaDebito  AS ROUND(montoBase + montoBase * porcentajeIVA/100.0, 2) PERSISTED,
 
 
-CREATE TABLE Pago.Reembolso (
-	idReembolso		INT IDENTITY(1,1) PRIMARY KEY,
-	fecha			DATE NOT NULL,
-	monto			DECIMAL(10, 2) NOT NULL,
-	motivo			VARCHAR(255) NOT NULL,
+	idFactura	INT UNIQUE NOT NULL,
+  
+	FOREIGN KEY (idFactura)  REFERENCES Factura.Factura(idFactura),
 
-	idPago			INT,
-
-	FOREIGN KEY (idPago) REFERENCES Pago.Pago(idPago),
-
-	CHECK (TRIM(motivo) <> ''),
-	CHECK (monto > 0)
+  	CHECK (montoBase > 0),
+	CHECK (tipoND = 'Recargo')
 );
 GO
+
+
 
 
 CREATE TABLE Pago.SaldoDeCuenta (
@@ -621,7 +632,5 @@ CREATE TABLE Pago.SaldoDeCuenta (
 	CHECK (monto > 0)
 );
 GO
-
-
 
 

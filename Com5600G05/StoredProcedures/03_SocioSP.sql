@@ -17,13 +17,13 @@ USE Com5600G05
 GO
 
 
+
 CREATE OR ALTER PROCEDURE Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 	@idPersona INT,
 	@idObraSocial INT,
 	@nroObraSocial VARCHAR(30),
 	@nroSocio VARCHAR(10),
-	@debitoAutomatico BIT,
-	@cuit VARCHAR(20),
+	@cuit VARCHAR(20) = NULL,
 	@idCategoria INT
 AS
 BEGIN
