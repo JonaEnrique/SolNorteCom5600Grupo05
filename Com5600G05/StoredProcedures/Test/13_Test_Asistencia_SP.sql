@@ -1,8 +1,23 @@
+/*
+	Fecha: 23/05/2025
+	Grupo: 05
+	Materia: Bases de Datos Aplicada
+	Nicolas Perez 40015709
+	Santiago Sanchez 42281463
+	Jonathan Enrique 43301711
+	Teo Turri 42819058
+
+	Genere store procedures para manejar la inserción, modificado, borrado (si corresponde,
+	también debe decidir si determinadas entidades solo admitirán borrado lógico) de cada tabla.
+	Los nombres de los store procedures NO deben comenzar con “SP”. 
+
+*/
+USE Com5600G05 
+GO
 -------<<<<<<<TABLA ASISTE>>>>>>>-------
 -- SE EJECUTARA EL STORE PROCEDURE 14_CLASE_SP
 --EXEC Actividad.CrearAsistenciaSeleccionandoClase 
-USE Com5600G05 
-GO
+
 --JUAN SANBUZETTI REALIZA SOLO FUTSAL
 EXEC Actividad.CrearAsistenciaSeleccionandoClase @estadoAsistencia ='P' ,@idClase =1 ,@idSocio = 1;
 EXEC Actividad.CrearAsistenciaSeleccionandoClase @estadoAsistencia ='P' ,@idClase =2,@idSocio =  1;

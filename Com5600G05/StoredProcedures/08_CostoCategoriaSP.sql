@@ -44,3 +44,38 @@ END
 GO
 
 -- no se modifica el costo de la categoria, si un precio se mantiene despues de su fecha de vencimiento se crea uno con el mismo precio pero diferente fecha
+
+--	CREO FUNCION POR SI CAMBIAMOS DE LOGICA
+CREATE OR ALTER PROCEDURE Socio.ModificarCostoCategoria
+	@idCostoCategoria INT,
+	@nuevoPrecio DECIMAL(10, 2),
+	@nuevaFechaVigencia DATE
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.CostoCategoria CC WHERE CC.idCostoCategoria = @idCostoCategoria )
+	BEGIN
+		RAISERROR('No existe un costo con el ID %d.', 10, 1, @idCostoCategoria);
+		RETURN;
+	END
+
+	UPDATE Socio.CostoCategoria
+	SET
+		precio = @nuevoPrecio,
+		fechaVigencia = @nuevaFechaVigencia
+	WHERE
+		idCostoCategoria = @idCostoCategoria;
+END
+GO
+CREATE OR ALTER PROCEDURE Socio.eliminarCostoCategoria
+	@idCostoCategoria INT
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Socio.CostoCategoria CC WHERE CC.idCostoCategoria = @idCostoCategoria )
+	BEGIN
+		RAISERROR('No existe un costo con el ID %d.', 10, 1, @idCostoCategoria);
+		RETURN;
+	END
+
+	DELETE Socio.CostoCategoria WHERE idCostoCategoria = @idCostoCategoria;
+END
+GO

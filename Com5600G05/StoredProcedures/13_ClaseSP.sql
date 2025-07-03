@@ -17,7 +17,7 @@ USE Com5600G05
 GO
 
 -- Crear Clase
-CREATE OR ALTER PROCEDURE Actividad.CrearActividadDeportivaSinCosto
+CREATE OR ALTER PROCEDURE Actividad.CrearClase
 	@fecha DATE,
 	@profesor VARCHAR(100), -- tiene que coincidir con la cantidad de caracteres de la tabla
 	@idActividad INT -- asumo que lo selecciono de una lista desplegable

@@ -69,3 +69,4 @@ BEGIN
 	WHERE idRol = @idRol;
 END
 GO
+--Eliminar Rol?

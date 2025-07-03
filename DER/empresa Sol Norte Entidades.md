@@ -39,23 +39,6 @@
 - <span style="color:yellow">idJornada (FK)</span>
 - <span style="color:yellow">idSocio (FK)</span>
 
-## tipo de actividad
-- <span style="color:red">idTipoAct (PK)</span>
-- descripcion
-- <span style="color:yellow">idActExtra (FK)</span>
-
-## tipo de edad
-- <span style="color:red">idEdad (PK)</span>
-- descripcion
-
-## tipoCliente
-- <span style="color:red">idtipoCliente (PK)</span>
-- descripcion
-
-## tipo duración
-- <span style="color:red">idDuracion (PK)</span>
-- descripcion
-
 ## tarifa
 - <span style="color:red">idTarifa (PK)</span>
 - importe
@@ -152,7 +135,6 @@
 - idCostoAct (PK)
 - precio
 - fechaVigencia
-- descripcion
 - <span style="color:yellow">idActividad (FK)</span>
 
 ## clase
@@ -181,10 +163,6 @@
 - Nombre
 - NroObraSocial
 
-## TelefonoObraSocial
-- <span style="color:red">idTelefono (PK)</span>
-- telefono
-- <span style="color:yellow">idObraSocial (FK)</span>
 
 ## usuario
 - <span style="color:red">idUsuario (PK)</span>
@@ -200,25 +178,11 @@
 - <span style="color:yellow">idArea (FK)</span>
 
 
-## Area
-- <span style="color:red">idArea (PK)</span>
-- nombre
-
 ## RolUsuario
 - <span style="color:red">idRolUsuario (PK)</span>
 - <span style="color:yellow">idRol (FK)</span>
 - <span style="color:yellow">idSocio (FK)</span>
 
-## EstadoSocio
-- <span style="color:red">idEstado (PK)</span>
-- descripcion
-- fecha
 
 
-# se podria poner tarjeta para el devito autopmatico y una entidad registro cuota para agilizar la busqueda del informe 6 de deudores morozos
-## RegistroCuotas
-- <span style="color:red">idCuota (PK)</span>
-- monto
-- fecha
-- estado
-- <span style="color:yellow">idSocio (FK)</span>
+

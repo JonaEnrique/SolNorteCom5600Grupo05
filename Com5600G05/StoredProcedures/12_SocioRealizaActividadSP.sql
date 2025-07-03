@@ -94,3 +94,4 @@ BEGIN
 	WHERE idRelacion = @idRealizaActividad;
 END
 GO
+--falta elim

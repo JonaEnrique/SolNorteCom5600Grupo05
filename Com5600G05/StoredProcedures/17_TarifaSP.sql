@@ -77,6 +77,7 @@ BEGIN
 		fechaVigencia = @fechaVigencia
 	WHERE idTarifa = @idTarifa;
 END
+GO
 
 CREATE OR ALTER PROCEDURE Actividad.EliminarTarifa
 	@idTarifa INT
@@ -88,3 +89,4 @@ BEGIN
 	END
 	DELETE FROM Actividad.Tarifa WHERE idTarifa = @idTarifa;
 END
+GO

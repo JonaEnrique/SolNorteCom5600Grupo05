@@ -27,7 +27,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredP
 		StoredProcedures\09_CategoriaSP.sql = StoredProcedures\09_CategoriaSP.sql
 		StoredProcedures\10_CostoActividadDeportivaSP.sql = StoredProcedures\10_CostoActividadDeportivaSP.sql
 		StoredProcedures\11_ActividadDeportivaSP.sql = StoredProcedures\11_ActividadDeportivaSP.sql
-		StoredProcedures\12_RealizaActividadSP.sql = StoredProcedures\12_RealizaActividadSP.sql
 		StoredProcedures\12_SocioRealizaActividadSP.sql = StoredProcedures\12_SocioRealizaActividadSP.sql
 		StoredProcedures\13_ClaseSP.sql = StoredProcedures\13_ClaseSP.sql
 		StoredProcedures\14_AsisteSP.sql = StoredProcedures\14_AsisteSP.sql
@@ -44,8 +43,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredP
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5F68-4F6C-92D7-986988F78710}"
 	ProjectSection(SolutionItems) = preProject
-		Scripts\Test\01_Test_Persona_SP.sql = Scripts\Test\01_Test_Persona_SP.sql
-		Scripts\Test\02_Test_Rol_SP.sql = Scripts\Test\02_Test_Rol_SP.sql
+		StoredProcedures\Test\01_Test_Persona_SP.sql = StoredProcedures\Test\01_Test_Persona_SP.sql
+		StoredProcedures\Test\02_Test_Rol_SP.sql = StoredProcedures\Test\02_Test_Rol_SP.sql
 		StoredProcedures\Test\03_Test_Obra_Social_SP.sql = StoredProcedures\Test\03_Test_Obra_Social_SP.sql
 		StoredProcedures\Test\04_Test_Grupo_Familiar_SP.sql = StoredProcedures\Test\04_Test_Grupo_Familiar_SP.sql
 		StoredProcedures\Test\05_Test_Costo_Categoria_SP.sql = StoredProcedures\Test\05_Test_Costo_Categoria_SP.sql
@@ -57,7 +56,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5
 		StoredProcedures\Test\11_Test_Jornada_SP.sql = StoredProcedures\Test\11_Test_Jornada_SP.sql
 		StoredProcedures\Test\12_Test_Clase_SP.sql = StoredProcedures\Test\12_Test_Clase_SP.sql
 		StoredProcedures\Test\13_Test_Asistencia_SP.sql = StoredProcedures\Test\13_Test_Asistencia_SP.sql
-		Scripts\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql = Scripts\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql
+		StoredProcedures\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql = StoredProcedures\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql
 	EndProjectSection
 EndProject
 Global
@@ -65,7 +64,7 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{79A160BF-977A-437B-9AF2-068CA434974C}.Default|Default.ActiveCfg = Default
+		{A07C8AE3-09C1-4828-AF28-F4F2725EBD3D}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

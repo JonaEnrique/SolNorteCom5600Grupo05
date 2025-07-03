@@ -138,6 +138,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idCategoria = @idCategoria)
 	BEGIN;
 		THROW 51000, 'La categoria que se intento eliminar tiene socios asociados', 1;
+		--se debe hacer un borrado logico
 	END
 
 	DELETE FROM Socio.CostoCategoria

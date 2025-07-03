@@ -46,5 +46,36 @@ BEGIN
 		@idActividadDeportiva
 	);
 END
-
+GO
 -- no se modifica, se hace uno nuevo
+
+--POR SI IMPLEMENTAMOS OTRA LOGICA
+CREATE OR ALTER PROCEDURE Actividad.ModificarCostoActividadDeportiva
+	@idCostoActividadDertiva INT,
+	@fechaVigencia DATE,
+	@precio DECIMAL(10, 2)
+AS
+BEGIN
+	IF NOT EXISTS(SELECT 1 FROM Actividad.CostoActividadDeportiva WHERE idCostoActividadDeportiva = @idCostoActividadDertiva)
+	BEGIN
+		RAISERROR('ID: %d no existente en tabla CostoActividadDeportiva',16,1,@idCostoActividadDertiva);
+	END
+	UPDATE Actividad.CostoActividadDeportiva 
+	SET
+	fechaVigencia = @fechaVigencia,
+	precio = @precio
+	WHERE idCostoActividadDeportiva = @idCostoActividadDertiva;
+END
+GO
+
+CREATE OR ALTER PROCEDURE Actividad.EliminarCostoActividadDeportiva
+	@idCostoActividadDertiva INT
+AS
+BEGIN
+	IF NOT EXISTS(SELECT 1 FROM Actividad.CostoActividadDeportiva WHERE idCostoActividadDeportiva = @idCostoActividadDertiva)
+	BEGIN
+		RAISERROR('ID: %d no existente en tabla CostoActividadDeportiva',16,1,@idCostoActividadDertiva);
+	END
+	DELETE Actividad.CostoActividadDeportiva WHERE idCostoActividadDeportiva = @idCostoActividadDertiva;
+END
+GO

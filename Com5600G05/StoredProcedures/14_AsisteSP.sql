@@ -53,3 +53,27 @@ BEGIN
 	);
 END
 GO
+
+CREATE OR ALTER PROCEDURE Actividad.ModificarAsistencia
+	@idAsistencia INT,
+	@estadoAsistencia CHAR(2)
+AS
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM Actividad.Asiste WHERE idAsistencia = @idAsistencia)
+	BEGIN
+		RAISERROR('No existe un socio con el ID %d', 10, 1, @idAsistencia);
+		RETURN;
+	END
+
+	IF @estadoAsistencia NOT LIKE '[AJP]'
+	BEGIN
+		RAISERROR('El estado de asistencia debe ser P, A o J', 10, 1);
+		RETURN;
+	END
+
+	UPDATE Actividad.Asiste
+	SET
+	asistencia = @estadoAsistencia
+	WHERE idAsistencia = @idAsistencia;
+END
+GO
