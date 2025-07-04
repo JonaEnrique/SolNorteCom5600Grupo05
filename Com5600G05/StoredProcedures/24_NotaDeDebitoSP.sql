@@ -18,7 +18,8 @@ USE Com5600G05
 GO
 
 
-CREATE OR ALTER PROCEDURE Factura.CrearNotaDeDebito
+
+CREATE OR ALTER PROCEDURE Factura.CrearNotaDebito
 	@fechaEmision DATE,
 	@idFactura INT
 AS
@@ -51,6 +52,9 @@ BEGIN
 		THROW 51404, 'La fecha de emision debe ser mayor a la fecha de recargo en Factura.', 1;
 	END;
 
+	IF 'Emitida' <> (SELECT estado FROM Factura.Factura WHERE idFactura = @idFactura)
+		THROW 51405, 'No se puede agregar una nota de debito a una Factura que no esta en estado Emitida', 1;
+
 	INSERT INTO Factura.NotaDebito(fechaEmision, montoBase, porcentajeIVA, idFactura)
 	SELECT 
 		@fechaEmision,
@@ -63,15 +67,72 @@ BEGIN
 	FROM Factura.Factura
 	WHERE idFactura = @idFactura;
 
+
+	UPDATE Factura.Factura
+	SET estado = 'Vencida'
+	WHERE idFactura = @idFactura;
 END;
 GO
+
+--Job que se corre todos los dias. 
+
+CREATE OR ALTER PROCEDURE Factura.RecargarFacturaAutomaticamente
+AS
+BEGIN
+
+
+	-- Detecto facturas vencidas que están Emitidas.
+	DECLARE @facturasVencidas TABLE (
+		idFactura INT PRIMARY KEY
+	);
+	INSERT INTO @facturasVencidas (idFactura)
+	SELECT
+		f.idFactura
+	FROM
+		Factura.Factura AS f
+	WHERE
+		f.estado = 'Emitida'
+		AND f.fechaVencimiento < GETDATE();
+
+	-- Crear notas de débito por facturas vencidas.
+	DECLARE @fechaHoy DATE = GETDATE();
+	DECLARE @sql VARCHAR(MAX) = '';
+
+	SELECT
+		@sql += 
+			N'EXEC Factura.CrearNotaDebito'
+			+ ' @idFactura = '   + CAST(idFactura   AS VARCHAR)
+			+ ', @fechaEmision = ''' + CAST(@fechaHoy AS VARCHAR)  + ''';'
+			+ CHAR(13) + CHAR(10)
+	FROM
+		@facturasVencidas;
+
+	PRINT @sql;
+
+	IF LEN(@sql) > 0
+		EXEC (@sql);
+
+END;
+GO
+
 
 
 CREATE OR ALTER TRIGGER Factura.NoModificarNotaDebito
 ON Factura.NotaDebito
-INSTEAD OF UPDATE, DELETE
+INSTEAD OF UPDATE
 AS
 BEGIN;
-	THROW 51405, 'No está permitido modificar/eliminar notas de debito ya emitidas.', 1;
+	THROW 51406, 'No está permitido modificar notas de debito ya emitidas.', 1;
 END;
 GO
+
+
+CREATE OR ALTER TRIGGER Factura.NoEliminarNotaDebito
+ON Factura.NotaDebito
+INSTEAD OF DELETE
+AS
+BEGIN;
+	THROW 51407, 'No está permitido eliminar notas de debito ya emitidas.', 1;
+END;
+GO
+

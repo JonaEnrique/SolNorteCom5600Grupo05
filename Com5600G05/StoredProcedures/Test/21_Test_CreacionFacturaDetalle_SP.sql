@@ -240,3 +240,112 @@ BEGIN CATCH
 END CATCH;
 GO
 
+
+
+--Test 3: Creacion Nota de debito.
+
+BEGIN TRY
+	SET XACT_ABORT ON;
+    BEGIN TRAN;
+
+    -- 0. Datos de prueba
+    DECLARE 
+        @idSocio          INT,
+        @idCategoriaMayor   INT,
+        @idObraSocial       INT,
+        @idFactura          INT;
+	
+	
+
+    -- 0.1 Creo personas y socios
+    EXEC Persona.CrearPersona
+        @dni                = 42819058,
+        @nombre             = 'Teo',
+        @apellido           = 'Turri',
+        @email              = 'teoturri12@gmail.com',
+        @telefono           = '11111111',
+        @telefonoEmergencia = '22222222',
+        @fechaNacimiento    = '2000-11-23',
+        @idPersona          = @idSocio OUTPUT;
+
+
+
+
+    SELECT @idCategoriaMayor = idCategoria 
+		FROM Socio.Categoria 
+     WHERE nombre = 'Mayor';
+
+
+    SELECT TOP 1 @idObraSocial = idObraSocial 
+		FROM Socio.ObraSocial;
+
+    EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
+        @idPersona    = @idSocio,
+        @idObraSocial = @idObraSocial,
+        @nroObraSocial= 'P1234',
+        @nroSocio     = 'P-5001',
+        @idCategoria  = @idCategoriaMayor;
+
+
+    -- 1. Test de inserción masiva con el wrapper
+    DECLARE @detalles Factura.DetalleFacturaTipo;
+    INSERT INTO @detalles (descripcion, idSocioBeneficiario)
+    VALUES
+      ('Cuota',        @idSocio);
+
+
+	DECLARE @fechaEmisionFactura DATE = DATEADD(DAY, -12, GETDATE());
+
+
+    EXEC Factura.WrapperCrearFacturaConDetalle
+	  @fechaEmision = @fechaEmisionFactura,
+      @idPersona = @idSocio,
+      @detalles  = @detalles,
+      @idFactura = @idFactura OUTPUT;
+
+	
+	EXEC Factura.RecargarFacturaAutomaticamente;
+
+    -- 2. Verifico resultados
+    SELECT f.*, nd.*
+      FROM Factura.Factura f
+      JOIN Factura.DetalleFactura df
+        ON df.idFactura = f.idFactura
+	  JOIN Factura.NotaDebito nd
+		ON nd.idFactura = f.idFactura
+     WHERE f.idFactura = @idFactura;
+
+
+	DISABLE TRIGGER Factura.NoEliminarNotaDebito ON Factura.NotaDebito;
+
+    -- 3. Limpieza de datos de prueba
+    DELETE FROM Factura.DetalleFactura
+	WHERE idSocioBeneficiario IN (@idSocio);
+
+	DELETE FROM Factura.NotaDebito
+	WHERE idFactura IN (@idFactura);
+
+    DELETE FROM Factura.Factura
+     WHERE idPersona IN (@idSocio);
+
+
+    DELETE FROM Socio.Socio
+     WHERE idSocio IN (@idSocio);
+
+    DELETE FROM Persona.Persona
+     WHERE idPersona IN (@idSocio);
+
+	 ENABLE TRIGGER Factura.NoEliminarNotaDebito ON Factura.NotaDebito;
+
+    COMMIT;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK;
+
+    DECLARE 
+        @ErrMsg   NVARCHAR(4000) = ERROR_MESSAGE();
+    THROW 70000, @ErrMsg, 1
+END CATCH;
+GO
+

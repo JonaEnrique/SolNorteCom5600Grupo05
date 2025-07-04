@@ -482,7 +482,7 @@ CREATE TABLE Factura.Factura (
     tipoFactura        CHAR(1)       NOT NULL DEFAULT 'C',
     fechaEmision       DATE          NOT NULL,
     fechaRecargo       AS DATEADD(DAY, 5, fechaEmision)   PERSISTED,
-    fechaVencimiento   AS DATEADD(DAY,10, fechaEmision)   PERSISTED,
+    fechaVencimiento   AS DATEADD(DAY, 10, fechaEmision)   PERSISTED,
     totalFactura       DECIMAL(10,2) DEFAULT NULL,
     estado             VARCHAR(15)   NOT NULL DEFAULT 'Borrador',
 
