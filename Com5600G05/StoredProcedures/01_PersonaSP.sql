@@ -61,7 +61,7 @@ BEGIN
 	);
 
 	SET @idPersona = SCOPE_IDENTITY();
-END
+END;
 GO
 
 -- modificar persona

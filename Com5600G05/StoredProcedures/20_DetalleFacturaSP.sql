@@ -97,7 +97,7 @@ BEGIN
 
 	--Actualizar total
 	UPDATE Factura.Factura
-	SET totalFactura = totalFactura + @montoFinal
+	SET totalFactura = ISNULL(totalFactura,0) + @montoFinal
 	WHERE idFactura = @idFactura;
 END;
 GO
@@ -290,9 +290,8 @@ BEGIN
     IF @descripcion NOT IN (
         'Cuota', 'Taekwondo', 'Vóley', 'Futsal', 
         'Natación', 'Baile artístico', 'Ajedrez',
-		'UsoPileta:Socio_Dia', 'UsoPileta:Socio_Mes', 
-		'UsoPileta:Socio_Temporada', 'UsoPileta:Invitado',
-		'Colonia', 'AlquilerSUM'
+		'UsoPileta:Día', 'UsoPileta:Mes', 
+		'UsoPileta:Temporada', 'Colonia', 'AlquilerSUM'
     )
         THROW 51102, 
               'La descripción debe ser: Cuota, Taekwondo, Vóley, Futsal, Natación, Baile artístico, Ajedrez, 
@@ -350,8 +349,7 @@ BEGIN
 
 		IF @descripcion IN (
 			'Cuota', 'Taekwondo', 'Vóley', 'Futsal',
-			'Natación', 'Baile artístico', 'Ajedrez', 'UsoPileta:Socio_Mes'
-		)
+			'Natación', 'Baile artístico', 'Ajedrez', 'UsoPileta:Mes') 
 		BEGIN
 			IF EXISTS (
 				SELECT 1
@@ -374,10 +372,11 @@ BEGIN
 			END;
 		END;
 
-		-------------- Validación de duplicados por dia/mes/año para UsoPileta:Socio_Día y UsoPileta:Invitado--------------
+		-------------- Validación de duplicados por dia/mes/año para UsoPileta:Día--------------
 
-		IF @descripcion IN ( 'UsoPileta:Socio_Día', 'UsoPileta:Invitado' )
+		IF @descripcion = 'UsoPileta:Día' 
 		BEGIN
+
 			IF EXISTS (
 				SELECT 1
 				  FROM Factura.Factura f
@@ -401,7 +400,7 @@ BEGIN
 		END;
 		-------------- Validación de duplicados por año para UsoPileta:Socio_Temporada--------------
 
-		IF @descripcion = 'UsoPileta:Socio_Temporada'
+		IF @descripcion = 'UsoPileta:Temporada'
 		BEGIN
 			IF EXISTS (
 				SELECT 1
@@ -442,7 +441,6 @@ BEGIN
 	EXEC Factura.ValidarDetalleFactura @idFactura = @idFactura, @descripcion = @descripcion, 
 		@idSocioBeneficiario = @idSocioBeneficiario;
 
-
 	---------------- Obtener socio quien recibe se le aplica el detalle. -----------------------------
 	SET @idSocioBeneficiario = Factura.ObtenerSocioBeneficiario(@idFactura, @idSocioBeneficiario);
 
@@ -452,7 +450,8 @@ BEGIN
 	DECLARE @precio DECIMAL(10,2)
 
 	EXEC Factura.ObtenerPrecioDetalle @idFactura = @idFactura,
-		@descripcion = @descripcion, @idSocioBeneficiario = @idSocioBeneficiario, @precio = @precio;
+		@descripcion = @descripcion, @idSocioBeneficiario = @idSocioBeneficiario, @precio = @precio OUTPUT;
+
 
 	---------------- Calcular IVA -----------------------------
 	DECLARE @PorcentajeIVA DECIMAL(5,2) = Factura.ObtenerPorcentajeIVA(@idFactura);
@@ -465,6 +464,8 @@ BEGIN
 	BEGIN TRY
 
 		BEGIN TRAN;
+
+
 		INSERT INTO Factura.DetalleFactura (idFactura, descripcion, montoBase, porcentajeIVA, idSocioBeneficiario)
 		VALUES (@idFactura, @descripcion, @precio, @porcentajeIVA, @idSocioBeneficiario);
 
@@ -484,7 +485,8 @@ BEGIN
 	BEGIN CATCH
 		IF @@TRANCOUNT > 0
 			ROLLBACK;
-		THROW 51110, 'Error al realizar la transaccion en Factura.CrearDetalleFactura', 1;
+		DECLARE @ErrMsg   NVARCHAR(4000) = ERROR_MESSAGE();
+		THROW 51110, @ErrMsg, 1;
 	END CATCH;
 
 END;

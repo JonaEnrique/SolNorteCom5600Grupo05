@@ -257,7 +257,8 @@ BEGIN
 		THROW 51000, 'El socio que se intento eliminar no existe', 1;
 	END
 
-	IF EXISTS (SELECT 1 FROM Factura.Factura F WHERE F.idPersona = @idSocio)
+
+	IF EXISTS (SELECT 1 FROM Factura.Factura WHERE idPersona = @idSocio)
 	BEGIN
 		PRINT('El socio que se intento eliminar tiene facturas asociadas, se borrara logicamente');
 		UPDATE Socio.Socio
