@@ -44,7 +44,7 @@ FROM Factura.DetalleFactura AS df
 INNER JOIN Factura.Factura AS f
 	ON df.idFactura = f.idFactura
 INNER JOIN Persona.Persona AS s
-	ON f.idSocio = s.idPersona
+	ON f.idPersona = s.idPersona
 LEFT OUTER JOIN Pago.Pago AS p
 	ON p.idFactura = f.idFactura
 LEFT OUTER JOIN Pago.FormaPago AS fp
