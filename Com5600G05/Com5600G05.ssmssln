@@ -6,8 +6,8 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scritps", "Scritps", "{80CFE0A1-E182-48B3-91AA-A26FFF8BBB9E}"
 	ProjectSection(SolutionItems) = preProject
 		Scripts\00_CreacionTablas.sql = Scripts\00_CreacionTablas.sql
+		Scripts\02_Preimportaciones.sql = Scripts\02_Preimportaciones.sql
 		Scripts\04_LoteDePrueba.sql = Scripts\04_LoteDePrueba.sql
-		Scripts\05_Preimportaciones.sql = Scripts\05_Preimportaciones.sql
 		Scripts\06_SPImportaciones.sql = Scripts\06_SPImportaciones.sql
 		Scripts\07_EjecucionImportaciones.sql = Scripts\07_EjecucionImportaciones.sql
 		Scripts\08_Reportes.sql = Scripts\08_Reportes.sql
@@ -35,10 +35,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredP
 		StoredProcedures\17_TarifaSP.sql = StoredProcedures\17_TarifaSP.sql
 		StoredProcedures\18_InvitacionEventoSP.sql = StoredProcedures\18_InvitacionEventoSP.sql
 		StoredProcedures\19_FacturaSP.sql = StoredProcedures\19_FacturaSP.sql
-		StoredProcedures\20_NotaDeCreditoSP.sql = StoredProcedures\20_NotaDeCreditoSP.sql
+		StoredProcedures\20_DetalleFacturaSP.sql = StoredProcedures\20_DetalleFacturaSP.sql
 		StoredProcedures\21_FormaDePagoSP.sql = StoredProcedures\21_FormaDePagoSP.sql
-		StoredProcedures\22_PagoSP.sql = StoredProcedures\22_PagoSP.sql
-		StoredProcedures\23_ReembolsoSP.sql = StoredProcedures\23_ReembolsoSP.sql
+		StoredProcedures\22_NotaDeCreditoSP.sql = StoredProcedures\22_NotaDeCreditoSP.sql
+		StoredProcedures\23_NotaDeDebitoSP.sql = StoredProcedures\23_NotaDeDebitoSP.sql
+		StoredProcedures\24_PagoSP.sql = StoredProcedures\24_PagoSP.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5F68-4F6C-92D7-986988F78710}"
@@ -57,6 +58,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5
 		StoredProcedures\Test\12_Test_Clase_SP.sql = StoredProcedures\Test\12_Test_Clase_SP.sql
 		StoredProcedures\Test\13_Test_Asistencia_SP.sql = StoredProcedures\Test\13_Test_Asistencia_SP.sql
 		StoredProcedures\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql = StoredProcedures\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql
+		StoredProcedures\Test\19_Test_Factura_SP.sql = StoredProcedures\Test\19_Test_Factura_SP.sql
+		StoredProcedures\Test\20_Test_DetalleFactura_SP.sql = StoredProcedures\Test\20_Test_DetalleFactura_SP.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Seguridad", "Seguridad", "{D9028B33-9E98-4512-B08A-A40E1791120B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "View", "View", "{8B480B94-6600-4F7D-8DD2-D70DB44CC048}"
+	ProjectSection(SolutionItems) = preProject
+		Views\01_AutoridadesViews.sql = Views\01_AutoridadesViews.sql
+		Views\02_SociosViews.sql = Views\02_SociosViews.sql
+		Views\03_TesoreriaViews.sql = Views\03_TesoreriaViews.sql
 	EndProjectSection
 EndProject
 Global
@@ -64,10 +76,13 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A07C8AE3-09C1-4828-AF28-F4F2725EBD3D}.Default|Default.ActiveCfg = Default
+		{C72E79C3-C4CF-40B0-8C91-2D66D2E86210}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8B480B94-6600-4F7D-8DD2-D70DB44CC048} = {D9028B33-9E98-4512-B08A-A40E1791120B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EAB7C72C-B58A-4CA9-852B-C0E78F115576}
