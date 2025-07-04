@@ -18,7 +18,6 @@ USE Com5600G05
 GO
 
 
-
 CREATE OR ALTER PROCEDURE Factura.CrearNotaDeDebito
 	@fechaEmision DATE,
 	@idFactura INT

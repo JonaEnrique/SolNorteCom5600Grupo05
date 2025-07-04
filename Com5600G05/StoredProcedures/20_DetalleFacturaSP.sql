@@ -295,7 +295,7 @@ BEGIN
     )
         THROW 51102, 
               'La descripción debe ser: Cuota, Taekwondo, Vóley, Futsal, Natación, Baile artístico, Ajedrez, 
-			  UsoPileta:Socio_Dia, UsoPileta:Socio_Mes, UsoPileta:Socio_Temporada, UsoPileta:Invitado,  Colonia, AlquilerSUM.', 
+			  UsoPileta:Dia, UsoPileta:Mes, UsoPileta:Temporada,  Colonia, AlquilerSUM.', 
               1;
 	
 

@@ -19,4 +19,3 @@ EXEC Importacion.ImportarCuotas @rutaCompletaArchivo = 'C:\Temp\Datos socios.xls
 GO
 
 
-
