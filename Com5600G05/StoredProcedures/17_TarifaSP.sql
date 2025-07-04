@@ -27,7 +27,7 @@ CREATE OR ALTER PROCEDURE Actividad.CrearTarifa
 AS
 BEGIN
 	-- verifico que coincidan con los valores validos
-	IF NOT (@duracion = 'DIA' OR @duracion = 'MES' OR @duracion = 'TEMPORADA')
+	IF NOT (@duracion = 'Día' OR @duracion = 'MES' OR @duracion = 'TEMPORADA')
 	BEGIN;
 		THROW 51000, 'La duracion debe ser DIA, MES o TEMPORADA', 1;
 	END

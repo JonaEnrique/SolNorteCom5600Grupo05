@@ -6,8 +6,8 @@ GO
 -------<<<<<<<TABLA TARIFA>>>>>>>-------
 -- SE EJECUTARA EL STORE PROCEDURE 17_TARIFA_SP
 
-EXEC Actividad.CrearTarifa @precio =25000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='DIA', @edad ='ADULTO', @tipoCliente ='SOCIO';
-EXEC Actividad.CrearTarifa @precio =15000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='DIA', @edad ='MENOR', @tipoCliente ='SOCIO';
+EXEC Actividad.CrearTarifa @precio =25000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='Día', @edad ='ADULTO', @tipoCliente ='SOCIO';
+EXEC Actividad.CrearTarifa @precio =15000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='Día', @edad ='MENOR', @tipoCliente ='SOCIO';
 
 EXEC Actividad.CrearTarifa @precio =625000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='MES', @edad ='ADULTO', @tipoCliente ='SOCIO';
 EXEC Actividad.CrearTarifa @precio =375000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='MES', @edad ='MENOR', @tipoCliente ='SOCIO';
@@ -15,8 +15,8 @@ EXEC Actividad.CrearTarifa @precio =375000, @fechaVigencia = '2025-09-20', @desc
 EXEC Actividad.CrearTarifa @precio =2000000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='TEMPORADA', @edad ='ADULTO', @tipoCliente ='SOCIO';
 EXEC Actividad.CrearTarifa @precio =1200000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='TEMPORADA', @edad ='MENOR', @tipoCliente ='SOCIO';
 
-EXEC Actividad.CrearTarifa @precio =30000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='DIA', @edad ='ADULTO', @tipoCliente ='INVITADO';
-EXEC Actividad.CrearTarifa @precio =20000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='DIA', @edad ='MENOR', @tipoCliente ='INVITADO';
+EXEC Actividad.CrearTarifa @precio =30000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='Día', @edad ='ADULTO', @tipoCliente ='INVITADO';
+EXEC Actividad.CrearTarifa @precio =20000, @fechaVigencia = '2025-09-20', @descripcionActividad ='UsoPileta', @duracion ='Día', @edad ='MENOR', @tipoCliente ='INVITADO';
 
 --ERRORES INSECION
 --NO SE INGRESO CORECTAMENTE TEMPOPARADA
@@ -70,7 +70,7 @@ EXEC Pago.CrearFormaDePago @nombre = 'efectivo';
 EXEC Pago.CrearFormaDePago @nombre = 'Visa';
 EXEC Pago.CrearFormaDePago @nombre = 'MasterCard';
 EXEC Pago.CrearFormaDePago @nombre = 'Tarjeta Naranja';
-EXEC Pago.CrearFormaDePago @nombre = 'Pago Facil';
+EXEC Pago.CrearFormaDePago @nombre = 'Pago Fácil';
 EXEC Pago.CrearFormaDePago @nombre = 'Rapipago';
 EXEC Pago.CrearFormaDePago @nombre = 'Transferencia Mercado Pago';
 
