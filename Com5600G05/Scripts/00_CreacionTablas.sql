@@ -73,6 +73,12 @@ GO
 CREATE SCHEMA Reporte;
 GO
 
+
+DROP SCHEMA IF EXISTS Seguridad;
+GO
+CREATE SCHEMA Seguridad;
+GO
+
 -- *************** BORRADO de TABLAS *************** --
 
 
@@ -430,8 +436,8 @@ GO
 CREATE TABLE Actividad.ActividadExtra (
     idActividadExtra		INT             IDENTITY(1,1) PRIMARY KEY,
     descripcionActividad    VARCHAR(20)     NOT NULL,
-    fechaInicio				DATE            NOT NULL,
-    fechaFin				DATE            NOT NULL,
+    fechaInicio				DATE			NOT NULL,
+    fechaFin				DATE			NOT NULL,
     idSocio					INT             NOT NULL,
 	idTarifa				INT				NOT NULL,
 	idJornada				INT				NOT NULL,
@@ -472,19 +478,19 @@ CREATE TABLE Factura.Factura (
     idFactura          INT    IDENTITY(1,1) PRIMARY KEY,
     nroFactura         AS RIGHT('00000000' + CONVERT(VARCHAR(8), idFactura), 8) PERSISTED,
 
-    puntoDeVenta       CHAR(4)      NOT NULL DEFAULT '0001',
-    tipoFactura        CHAR(1)      NOT NULL DEFAULT 'C',
-    fechaEmision       DATE         NOT NULL,
+    puntoDeVenta       CHAR(4)       NOT NULL DEFAULT '0001',
+    tipoFactura        CHAR(1)       NOT NULL DEFAULT 'C',
+    fechaEmision       DATE          NOT NULL,
     fechaRecargo       AS DATEADD(DAY, 5, fechaEmision)   PERSISTED,
     fechaVencimiento   AS DATEADD(DAY,10, fechaEmision)   PERSISTED,
-    totalFactura       DECIMAL(10,2) NULL DEFAULT NULL,
-    estado             VARCHAR(15)  NOT NULL DEFAULT 'Borrador',
+    totalFactura       DECIMAL(10,2) DEFAULT NULL,
+    estado             VARCHAR(15)   NOT NULL DEFAULT 'Borrador',
 
-	fechaPago		   DATE			DEFAULT NULL,
+	fechaPago		   DATE			 DEFAULT NULL,
 
-    idSocio            INT          NOT NULL,
+    idPersona          INT           NOT NULL,
 
-    FOREIGN KEY (idSocio) REFERENCES Socio.Socio(idSocio),
+    FOREIGN KEY (idPersona) REFERENCES Persona.Persona(idPersona),
 
     CHECK (tipoFactura IN ('A','B','C','E','M')),
 
@@ -493,6 +499,8 @@ CREATE TABLE Factura.Factura (
 
 );
 GO
+
+
 
 CREATE TABLE Factura.DetalleFactura (
     idDetalleFactura        INT             IDENTITY(1,1) PRIMARY KEY,
@@ -506,12 +514,7 @@ CREATE TABLE Factura.DetalleFactura (
 	idSocioBeneficiario		INT	NOT NULL,
 
 	FOREIGN KEY (idSocioBeneficiario) REFERENCES Socio.Socio(idSocio), 
-
-    montoFinalParaFactura   AS (
-      ROUND(
-        montoBase * (100.0 - porcentajeDescuento) / 100.0
-      , 2)
-    ) PERSISTED,
+    FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura),
 
     importeIVA              AS (
       ROUND(
@@ -521,7 +524,7 @@ CREATE TABLE Factura.DetalleFactura (
       , 2)
     ) PERSISTED,
 
-    montoFinalConIVA        AS (
+    montoFinal       AS (
       ROUND(
         montoBase 
         * (100.0 - porcentajeDescuento) / 100.0
@@ -530,14 +533,12 @@ CREATE TABLE Factura.DetalleFactura (
     ) PERSISTED,
 
 
-    FOREIGN KEY (idFactura) REFERENCES Factura.Factura(idFactura),
 
     CHECK (descripcion IN (
         'Cuota', 'Taekwondo', 'Vóley', 'Futsal', 
         'Natación', 'Baile artístico', 'Ajedrez',
-		'UsoPileta:Socio_Día', 'UsoPileta:Socio_Mes', 
-		'UsoPileta:Socio_Temporada', 'UsoPileta:Invitado',
-		'Colonia', 'AlquilerSUM'
+		'UsoPileta:Día', 'UsoPileta:Mes', 
+		'UsoPileta:Temporada', 'Colonia', 'AlquilerSUM'
     )),
     CHECK (montoBase > 0),
     CHECK (porcentajeDescuento BETWEEN 0 AND 100),

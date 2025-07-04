@@ -35,23 +35,26 @@ AS
 BEGIN
 
 	WITH SociosQueIncumplieron AS (
-		SELECT
-			f.idSocio,
+
+		SELECT DISTINCT
+			f.idPersona,
 			s.nroSocio,
 			p.nombre + ' ' + p.apellido AS NombreApellido,
-			FORMAT(f.fechaEmision, 'MMMM', 'es-ES') AS MesIncumplido
-		FROM Factura.Factura AS f
-		JOIN Socio.Socio s ON s.idSocio = f.idSocio
+			FORMAT(f.fechaEmision, 'MMMM yyyy', 'es-ES') AS MesIncumplido
+		FROM Factura.Factura  f
+		JOIN Factura.DetalleFactura df ON df.idFactura = f.idFactura 
+		JOIN Socio.Socio s ON s.idSocio = f.idPersona
 		JOIN Persona.Persona p ON p.idPersona = s.idSocio
-		WHERE f.tipoItem   = 'Cuota' AND f.estado = 'Pagada Vencida' AND f.fechaEmision BETWEEN @FechaInicio AND @FechaFin
+		WHERE df.descripcion   = 'Cuota' AND 
+			f.fechaEmision BETWEEN @FechaInicio AND @FechaFin AND
+			(f.fechaPago > f.fechaVencimiento OR f.estado = 'Vencida')
 	),
 	ConteoMorosidad AS (
 		SELECT 
-		  f.idSocio,
+		  idPersona,
 		  COUNT(*) AS CantidadIncumplimientos
-		FROM Factura.Factura f
-		WHERE f.tipoItem = 'Cuota' AND f.estado = 'Pagada Vencida' AND f.fechaEmision BETWEEN @FechaInicio AND @FechaFin
-		GROUP BY f.idSocio
+		FROM SociosQueIncumplieron 
+		GROUP BY idPersona
 	),
 	RankingMorosidad AS (
 		SELECT
@@ -60,7 +63,6 @@ BEGIN
 		FROM ConteoMorosidad
 		WHERE CantidadIncumplimientos > 2
 	)
-
 	SELECT
 	'Morosos Recurrentes'												AS [NombreReporte],
 	CAST(@FechaInicio AS varchar) + ' - ' + CAST(@FechaFin AS varchar)	AS [Período],
@@ -69,7 +71,7 @@ BEGIN
 			NombreApellido					AS [NombreApellido],
 			MesIncumplido                   AS [MesIncumplido]
 		FROM SociosQueIncumplieron s
-		JOIN RankingMorosidad r ON r.idSocio = s.idSocio
+		JOIN RankingMorosidad r ON r.idPersona = s.idPersona
 		ORDER BY r.Ranking ASC
 		FOR XML PATH('Socio'), TYPE
 	)
@@ -86,14 +88,15 @@ GO
 CREATE OR ALTER PROCEDURE Reporte.IngresosPorActividadMes
 AS
 BEGIN
-	
+		
 		WITH ValoresParaPivot AS(
 			SELECT
-				f.tipoItem AS Actividad,
+				df.descripcion AS Actividad,
 				FORMAT(f.fechaEmision, 'MMMM', 'es-ES') AS NombreMes,
-				CAST (f.totalFactura as decimal(10,2)) AS totalFactura			--Sin el CAST produce mas decimales de la cuenta.
+				CAST (df.montoFinal as decimal(10,2)) AS montoTotalDetalleFactura			--Sin el CAST produce mas decimales de la cuenta.
 			FROM Factura.Factura f
-			WHERE f.tipoItem IN ('Vóley','Futsal','Baile artístico','Natación','Ajedrez', 'Taekwondo')
+			JOIN Factura.DetalleFactura df ON df.idFactura = f.idFactura
+			WHERE df.descripcion IN ('Vóley','Futsal','Baile artístico','Natación','Ajedrez', 'Taekwondo')
 			AND f.fechaEmision BETWEEN DATEFROMPARTS(YEAR(GETDATE()), 1, 1) AND GETDATE()
 		)
 		SELECT
@@ -112,7 +115,7 @@ BEGIN
 			ISNULL([Diciembre],   0) AS Diciembre
 	FROM ValoresParaPivot
 	PIVOT (
-		SUM(totalFactura)
+		SUM(montoTotalDetalleFactura)
 		FOR NombreMes IN (
 			[Enero],[Febrero],[Marzo],[Abril],[Mayo],[Junio],
 			[Julio],[Agosto],[Septiembre],[Octubre],[Noviembre],[Diciembre]
@@ -132,7 +135,7 @@ GO
 CREATE OR ALTER PROCEDURE Reporte.InasistenciasCategoriaActividad
 AS
 BEGIN
-	SELECT ca.nombre AS Categoria, ad.nombre AS Actividad, COUNT(DISTINCT s.nroSocio) AS CantidadSociosConInasistencia
+	SELECT ca.nombre AS Categoria, ad.nombre AS Actividad, COUNT(DISTINCT s.idSocio) AS CantidadSociosConInasistencia
 	FROM Actividad.Asiste a
 	JOIN Socio.Socio s ON s.idSocio = a.idSocio
 	JOIN Socio.Categoria ca ON ca.idCategoria = s.idCategoria
