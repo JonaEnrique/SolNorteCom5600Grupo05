@@ -180,6 +180,7 @@ END
 GO
 
 
+
 CREATE OR ALTER TRIGGER Factura.NoModificarNotaCredito
 ON Factura.DetalleFactura
 INSTEAD OF UPDATE, DELETE

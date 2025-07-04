@@ -41,7 +41,7 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE Seguridad.AsignarRolAdministrativoDeFacturacion
-	@Usuario VARCHAR(30)
+	@Usuario VARCHAR(50)
 WITH EXECUTE AS OWNER
 AS
 BEGIN
@@ -60,7 +60,7 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE Seguridad.AsignarRolAdministrativoDeFacturacion
-	@Usuario VARCHAR(30)
+	@Usuario VARCHAR(50)
 WITH EXECUTE AS OWNER
 AS
 BEGIN
@@ -203,7 +203,7 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE Seguridad.QuitarRolAdministrativoDeFacturacion
-	@Usuario VARCHAR(30)
+	@Usuario VARCHAR(50)
 WITH EXECUTE AS OWNER
 AS
 BEGIN
