@@ -38,7 +38,11 @@ EXEC Socio.ModificarObraSocial @idObraSocial = 4, @nombreNuevo ='OSPIFSE',@telef
 
 --ID INEXISTENTE
 EXEC Socio.EliminarObraSocial @idObraSocial= 5;
---ID_OBRASOCIAL ESTA VINCULADA CON  SOCIO
 
+--ID_OBRASOCIAL ESTA VINCULADA CON  SOCIO
+EXEC Socio.EliminarObraSocial @idObraSocial= 2;
+
+--MOSTRAR SOCIO
+SELECT * FROM Socio.Socio;
 -- MOSTRAR OBRA SOCIAL
 SELECT * FROM Socio.ObraSocial;

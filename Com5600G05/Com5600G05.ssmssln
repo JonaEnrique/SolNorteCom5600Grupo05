@@ -49,6 +49,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5
 		StoredProcedures\Test\03_Test_Obra_Social_SP.sql = StoredProcedures\Test\03_Test_Obra_Social_SP.sql
 		StoredProcedures\Test\04_Test_Grupo_Familiar_SP.sql = StoredProcedures\Test\04_Test_Grupo_Familiar_SP.sql
 		StoredProcedures\Test\05_Test_Costo_Categoria_SP.sql = StoredProcedures\Test\05_Test_Costo_Categoria_SP.sql
+		StoredProcedures\Test\05A_Test_Categoria_Costo_SP.sql = StoredProcedures\Test\05A_Test_Categoria_Costo_SP.sql
 		StoredProcedures\Test\06_Test_Actividad_Deportiva_SP.sql = StoredProcedures\Test\06_Test_Actividad_Deportiva_SP.sql
 		StoredProcedures\Test\07_Test_Costo_Actividad_Deportiva_SP.sql = StoredProcedures\Test\07_Test_Costo_Actividad_Deportiva_SP.sql
 		StoredProcedures\Test\08_Test_Socio_SP.sql = StoredProcedures\Test\08_Test_Socio_SP.sql
@@ -76,7 +77,7 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C72E79C3-C4CF-40B0-8C91-2D66D2E86210}.Default|Default.ActiveCfg = Default
+		{68DA57BF-94C1-425C-80A9-670447647508}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

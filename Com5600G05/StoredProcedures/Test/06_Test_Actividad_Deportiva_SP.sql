@@ -24,10 +24,10 @@ EXEC Actividad.CrearActividadDeportivaSinCosto @nombre = 'Natación';
 EXEC Actividad.CrearActividadDeportivaSinCosto @nombre = 'Ajedrez';
 
 --ERROR NOMBRE YA EXISTENE
-EXEC Actividad.CrearActividadDeportivaSinCosto @nombre = 'Ajederez';
+EXEC Actividad.CrearActividadDeportivaSinCosto @nombre = 'Natación';
 
---INSERCION ACTIVIDAD DEPORTIVA CON COSTO CON CON COSTO
-EXEC Actividad.CrearActividadDeportivaConCostoNuevo @nombre = 'Boxeo',@fechaVigencia ='2025-07-31',@precio=25000;
+--INSERCION ACTIVIDAD DEPORTIVA CON COSTO 
+EXEC Actividad.CrearActividadDeportivaConCostoNuevo @nombre = 'Ajedrez',@fechaVigencia ='2025-07-31',@precio=25000;
 --ERROR NOMBRE YA EXISTENE
 EXEC Actividad.CrearActividadDeportivaConCostoNuevo @nombre = 'Boxeo',@fechaVigencia ='2025-07-31',@precio=25000;
 
@@ -40,8 +40,9 @@ EXEC Actividad.ModificarNombreActividadDeportiva @idActividadDeportiva = 4,@nomb
 --ELIMINAR ACTIVIDAD DEPORTIVA
 --ERROR ID INVALIDO
 EXEC Actividad.EliminarActividadDeportiva @idActividadDeportiva=20;
---ERROR TIENE ASOCIACION CON SOCIO
+--ERROR TIENE ASOCIACION CON SOCIO 
+EXEC Actividad.EliminarActividadDeportiva @idActividadDeportiva=1;
 --ERROR TIENE ASOCIACION CON CLASE
-
+EXEC Actividad.EliminarActividadDeportiva @idActividadDeportiva=1;
 -- MOSTRAR COSTO CATEGORIA
 SELECT * FROM Actividad.ActividadDeportiva;

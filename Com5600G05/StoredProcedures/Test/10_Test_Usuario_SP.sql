@@ -109,6 +109,6 @@ EXEC Usuario.ModificarUsuario @idUsuario=115,@nombre='ASD',@contraseña='ASD',@fe
 EXEC Usuario.ModificarUsuario @idUsuario=115,@nombre='ASD',@contraseña='ASD',@fechaRenovar='2025-09-09',@idRol = 4;
 
 --ELIMIMAR USUARIO
-EXEC Usuario.EliminarUsuario @idUsuario=115,@nombre='ASD',@contraseña='ASD',@fechaRenovar='2025-09-09',@idRol = 4;
+EXEC Usuario.EliminarUsuario @idUsuario=115;
 SELECT * FROM Usuario.Usuario;
 SELECT R.idRol, R.area,R.nombre FROM Usuario.Rol R ORDER BY R.idRol;

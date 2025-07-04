@@ -15,27 +15,36 @@
 USE Com5600G05
 GO
 --INSERCION EXITOSA
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=2,@idSocioMenor=3,@parentesco='Padre';
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=4,@idSocioMenor=5,@parentesco='Padre';
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=6,@idSocioMenor=7,@parentesco='Padre';
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=8,@idSocioMenor=9,@parentesco='Padre';
+DECLARE @IDFamiliar1 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=2,@idSocioMenor=3,@parentesco='Padre',@idGrupoFamiliar=@IDFamiliar1 OUTPUT;
+DECLARE @IDFamiliar2 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=4,@idSocioMenor=5,@parentesco='Padre',@idGrupoFamiliar=@IDFamiliar2 OUTPUT;
+DECLARE @IDFamiliar3 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=6,@idSocioMenor=7,@parentesco='Padre',@idGrupoFamiliar=@IDFamiliar3 OUTPUT;
+DECLARE @IDFamiliar4 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=8,@idSocioMenor=9,@parentesco='Padre',@idGrupoFamiliar=@IDFamiliar4 OUTPUT;
 
 --EROR DE INSERCION
 
 --NO EXITE EL ID DEL TUTOR
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=80,@idSocioMenor=9,@parentesco='Padre';
+DECLARE @TEST_A1 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=80,@idSocioMenor=9,@parentesco='Padre',@idGrupoFamiliar=@TEST_A1 OUTPUT;
 
 --NO EXISTE EL ID DEL MENOR O CADETE
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=8,@idSocioMenor=90,@parentesco='Padre';
+DECLARE @TEST_A2 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=8,@idSocioMenor=90,@parentesco='Padre',@idGrupoFamiliar=@TEST_A2 OUTPUT;
 
 --EL SOCIO NO PUEDE SER SU PROPIO TUTOR Y PERTENERCER A UN GRUPO FAMILIAR
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=9,@idSocioMenor=9,@parentesco='Padre';
+DECLARE @TEST_A3 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=9,@idSocioMenor=9,@parentesco='Padre',@idGrupoFamiliar=@TEST_A3 OUTPUT;
 
 --EL SOCIO PARA SER TUTOR DEBE SER MAYOR DE EDAD
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=9,@idSocioMenor=8,@parentesco='Padre';
+DECLARE @TEST_A4 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=9,@idSocioMenor=8,@parentesco='Padre',@idGrupoFamiliar=@TEST_A4 OUTPUT;
 
 --EL SOCIO NO PUEDE SERTUTOR DE UN MAYOR
-EXEC Socio.CrearGrupoFamiliar @idSocioTutor=8,@idSocioMenor=2,@parentesco='Padre';
+DECLARE @TEST_A5 INT;
+EXEC Socio.CrearGrupoFamiliar @idSocioTutor=8,@idSocioMenor=2,@parentesco='Padre',@idGrupoFamiliar=@TEST_A5 OUTPUT;
 
 --ERROR MODICICACION DE MENOR O CADETE
 

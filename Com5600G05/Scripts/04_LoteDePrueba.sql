@@ -46,6 +46,7 @@ EXEC Actividad.CrearActividadExtra @descrpicionActividad = 'UsoPileta', @fechaIn
 SELECT * FROM Actividad.ActividadExtra;
 
 -------<<<<<<<TABLA INVITAR EVENTO>>>>>>>-------
+-- SE EJECUTARA EL STORE PROCEDURE 18_Invitar_Evento_SP
 EXEC Actividad.CrearInvitacion @fechaInvitacion ='2025-06-29', @idActividadExtra =3 ,@idInvitado = 3;
 EXEC Actividad.CrearInvitacion @fechaInvitacion ='2025-06-29', @idActividadExtra =3 ,@idInvitado = 4;
 EXEC Actividad.CrearInvitacion @fechaInvitacion ='2025-06-29', @idActividadExtra =3 ,@idInvitado = 5;
@@ -63,7 +64,8 @@ EXEC Actividad.CrearInvitacion @fechaInvitacion ='2025-06-29', @idActividadExtra
 SELECT * FROM Actividad.InvitacionEvento; 
 
 -------<<<<<<<TABLA FORMA DE PAGO>>>>>>>-------
-
+--se ejecuta el SP 21_FORMA_DE_PAGO_SP
+--INSERCION EXITOSA
 EXEC Pago.CrearFormaDePago @nombre = 'efectivo';
 EXEC Pago.CrearFormaDePago @nombre = 'Visa';
 EXEC Pago.CrearFormaDePago @nombre = 'MasterCard';

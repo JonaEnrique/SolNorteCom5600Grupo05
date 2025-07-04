@@ -21,10 +21,9 @@ GO
 --Juan Sanbuzetti
 EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente 
 @idPersona = 1,
-@idObraSocial = 1,
-@nroObraSocial = 'ME-852785984',
 @nroSocio='S0001',
-@debitoAutomatico = 0, 
+@idObraSocial = 1,
+@nroObraSocial = 'ME-852785984', 
 @cuit = 37102403, 
 @idCategoria = 3;
 
@@ -34,7 +33,6 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idObraSocial = 2,
 @nroObraSocial = '1258788',
 @nroSocio='S0002',
-@debitoAutomatico = 0, 
 @cuit = 30123456, 
 @idCategoria = 3;
 
@@ -44,7 +42,6 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idObraSocial = 1,
 @nroObraSocial = 'ME-852785985',
 @nroSocio='S0003',
-@debitoAutomatico = 0, 
 @cuit = 50102403, 
 @idCategoria = 2;
 
@@ -53,8 +50,7 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idPersona = 4,
 @idObraSocial = 1,
 @nroObraSocial = 'ME-852785986',
-@nroSocio='S0004',
-@debitoAutomatico = 0, 
+@nroSocio='S0004', 
 @cuit = 41900234, 
 @idCategoria = 3;
 
@@ -63,8 +59,7 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idPersona = 5,
 @idObraSocial = 1,
 @nroObraSocial = 'ME-852785987',
-@nroSocio='S0005',
-@debitoAutomatico = 0, 
+@nroSocio='S0005', 
 @cuit = 37102403, 
 @idCategoria = 2;
 
@@ -73,8 +68,7 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idPersona = 6,
 @idObraSocial = 3,
 @nroObraSocial = 'ME-852785988',
-@nroSocio='S0006',
-@debitoAutomatico = 0, 
+@nroSocio='S0006', 
 @cuit = 50201304, 
 @idCategoria = 3;
 
@@ -84,7 +78,6 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idObraSocial = 1,
 @nroObraSocial = 'ME-852785484',
 @nroSocio='S0007',
-@debitoAutomatico = 0, 
 @cuit = 51102403, 
 @idCategoria = 1;
 
@@ -93,8 +86,7 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idPersona = 8,
 @idObraSocial = 1,
 @nroObraSocial = 'ME-852785990',
-@nroSocio='S0008',
-@debitoAutomatico = 0, 
+@nroSocio='S0008', 
 @cuit = 33102403, 
 @idCategoria = 3;
 
@@ -104,7 +96,6 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idObraSocial = 3,
 @nroObraSocial = 'ME-852785999',
 @nroSocio='S0009',
-@debitoAutomatico = 0, 
 @cuit = 54102403, 
 @idCategoria = 1;
 
@@ -113,8 +104,7 @@ EXEC Socio.CrearSocioConObraSocialExistenteYPersonaExistente
 @idPersona = 10,
 @idObraSocial = 2,
 @nroObraSocial = '698555',
-@nroSocio='S0010',
-@debitoAutomatico = 0, 
+@nroSocio='S0010', 
 @cuit = 36102403, 
 @idCategoria = 3;
 
