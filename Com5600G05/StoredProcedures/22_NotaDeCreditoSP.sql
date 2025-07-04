@@ -17,7 +17,7 @@ USE Com5600G05
 GO
 
 
-CREATE OR ALTER FUNCTION Factura.ObtenerTota
+CREATE OR ALTER FUNCTION Factura.ObtenerTotal
 	(@idFactura INT)
 RETURNS DECIMAL(10,2)
 AS

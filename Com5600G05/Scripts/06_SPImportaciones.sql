@@ -778,6 +778,7 @@ BEGIN
 		)
 
 
+
 		INSERT INTO Actividad.Asiste(idSocio, idClase, asistencia)
 		SELECT s.idSocio, c.idClase, t.asistencia
 		FROM #tempAsistencia t
@@ -791,8 +792,6 @@ BEGIN
 			AND Asiste.idClase = c.idClase
 		);
 
-		
-		
 
 		-- Creo facturas para el mes de los socios(se le asigna la factura al tutor o al socio)
 		-- que realizaron actividades deportivas
@@ -810,24 +809,23 @@ BEGIN
 			  ON gf.idSocioMenor = s.idSocio
 		)
 		INSERT INTO Factura.Factura (
-			descripcion,
 			fechaEmision,
 			estado,
-			idSocio
+			idPersona,
+			fechaPago
 		)
-		OUTPUT inserted.idFactura, inserted.idSocio, inserted.fechaEmision INTO #nuevasFacturas(idFactura, idSocio, fechaEmision)
+		OUTPUT inserted.idFactura, inserted.idPersona, inserted.fechaEmision INTO #nuevasFacturas(idFactura, idSocio, fechaEmision)
 		SELECT
-			'Actividades Deportivas',
 			fechaEmisionFactura,
 			'Pagada',
-			idDueñoFactura
+			idDueñoFactura,
+			fechaEmisionFactura
 		FROM FacturasSociosPorActividad fa
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM Factura.Factura f
-			WHERE f.idSocio       = fa.idDueñoFactura
+			WHERE f.idPersona       = fa.idDueñoFactura
 			  AND f.fechaEmision  = fa.fechaEmisionFactura
-			  AND f.descripcion   = 'Actividades Deportivas'
 		);
 
 		-- Insercion de Detalles de Factura.
@@ -905,12 +903,13 @@ BEGIN
 				a.idSocio,
 				DATEFROMPARTS(YEAR(c.fecha), MONTH(c.fecha), 1)
 		)
-		INSERT INTO Factura.DetalleFactura(idFactura, descripcion, montoBase, porcentajeDescuento,
+		INSERT INTO Factura.DetalleFactura(idFactura, descripcion, montoBase, idSocioBeneficiario, porcentajeDescuento,
 											motivoDescuento)
 		SELECT 
 			nf.idFactura,
 			df.nombreActividad,
 			df.precio,
+			df.socioRealizoActividad,
 			CASE
 				WHEN a.cantidadActividadesPorMes > 1 THEN 10
 				ELSE 0
@@ -932,17 +931,15 @@ BEGIN
 		WITH totalFacturaSumandoDetallesDeVenta AS (
 			SELECT 
 				df.idFactura,
-				CAST(ROUND(SUM(df.montoFinalConIVA),2) AS decimal(10,2)) AS totalFactura
+				SUM(df.montoFinalConIVA) AS totalFactura
 			FROM Factura.DetalleFactura df
 			GROUP BY df.idFactura
 		)
 		UPDATE f
-			SET f.totalFactura = tf.totalFactura
+			SET f.totalFactura = ROUND(tf.totalFactura,2)
 		FROM Factura.Factura f
 		JOIN totalFacturaSumandoDetallesDeVenta tf ON tf.idFactura = f.idFactura
 		WHERE f.totalFactura IS NULL
-
-
 
 		COMMIT TRANSACTION;
 	END TRY
@@ -956,6 +953,7 @@ BEGIN
 	IF @@TRANCOUNT > 0
 		ROLLBACK TRANSACTION;
 	DROP TABLE #tempAsistencia;
+	DROP TABLE #nuevasFacturas;
 END;
 GO
 
@@ -1025,76 +1023,82 @@ BEGIN
         ';
         EXEC (@sql);
 
-		INSERT INTO #tempPagos (
-    idTransaccion,
-    fecha,
-    nroSocio,
-    valor,
-    medioDePago
-)
-SELECT
-    CAST(CAST([Id de pago] AS DECIMAL(16,0)) AS VARCHAR(16))  AS idTransaccion,
-    fecha                                                     AS fecha,
-    [Responsable de pago]                                     AS nroSocio,
-    Valor                                                     AS valor,
-    [Medio de pago]                                           AS medioDePago
-FROM OPENROWSET(
-    'Microsoft.ACE.OLEDB.16.0',
-    'Excel 12.0;HDR=YES;IMEX=1;Database=C:\Temp\Datos socios.xlsx',
-    'SELECT * FROM [pago cuotas$]'
-) AS datosExcel;
 
-
-		DECLARE @recargo DECIMAL(5,4) = 1.10;
-		DECLARE @diaLimiteRecargo INT     = 10;		
-
-		
 		--Genero facturas a partir de pagos nuevos.
-		INSERT INTO Factura.Factura (descripcion, fechaEmision, idSocio, estado)
-		OUTPUT inserted.idFactura, inserted.fechaEmision, inserted.idSocio
+		INSERT INTO Factura.Factura (fechaEmision, idPersona, totalFactura, estado, fechaPago)
+		OUTPUT inserted.idFactura, inserted.fechaEmision, inserted.idPersona
 			INTO #NuevasFacturas(idFactura, fechaEmision, idSocio)
 		SELECT 
-			'Cuota',  
-			DATEFROMPARTS( YEAR(t.fecha), MONTH(t.fecha), 1 ),
-			s.idSocio,                                
-			CASE
-				WHEN t.fecha > DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 11) THEN 'Pagada Vencida'
-				ELSE 'Pagada'
-			END
+			DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 1),  -- Primer día del mes
+			s.idSocio,
+			t.valor,
+			'Pagada',
+			t.fecha
 		FROM #tempPagos t
 		JOIN Socio.Socio s ON s.nroSocio = t.nroSocio
 		WHERE NOT EXISTS (
-			SELECT 1 
+			SELECT 1
 			FROM Factura.Factura f
-			WHERE f.idSocio = s.idSocio
-			AND f.descripcion = 'Cuota'
-			AND f.fechaEmision = DATEFROMPARTS( YEAR(t.fecha), MONTH(t.fecha), 1 )
+			JOIN Factura.DetalleFactura df ON df.idFactura = f.idFactura
+			WHERE 
+				f.idPersona = s.idSocio AND
+				df.descripcion = 'Cuota' AND
+				f.fechaEmision = DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 1)
+		);
+
+		
+		--Genero los detalles de venta asociados a las nuevas facturas. No se calculan descuento ya que no detecte ninguno aplicado.
+		
+		
+		WITH CantidadIntegrantes AS (
+			SELECT
+				idSocioTutor,
+				COUNT(*) + 1 AS totalIntegrantes  -- +1 por el tutor
+			FROM Socio.GrupoFamiliar
+			GROUP BY idSocioTutor
+		),
+		GrupoFamiliarExpandido  AS (
+			SELECT
+				nf.idFactura,
+				t.valor AS montoTotal,
+				tutor.idSocio AS idSocioTutor,
+				miembrosGrupoFamiliar.idSocio AS idSocioBeneficiario,
+				ISNULL(ci.totalIntegrantes, 1) AS totalIntegrantes
+			FROM #NuevasFacturas nf
+			JOIN Socio.Socio tutor ON tutor.idSocio = nf.idSocio
+			JOIN #tempPagos t ON t.nroSocio = tutor.nroSocio
+								AND DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 1) = 
+									DATEFROMPARTS(YEAR(nf.fechaEmision), MONTH(nf.fechaEmision), 1)
+
+			-- Obtenemos integrantes (menores + tutor)
+			CROSS APPLY (
+				SELECT idSocioMenor AS idSocio
+				FROM Socio.GrupoFamiliar
+				WHERE idSocioTutor = tutor.idSocio
+				UNION ALL
+				SELECT tutor.idSocio
+			) AS miembrosGrupoFamiliar
+			LEFT JOIN CantidadIntegrantes ci ON ci.idSocioTutor = tutor.idSocio
 		)
-		
-		--Genero los detalles de venta asociados a las nuevas facturas.
-
-		INSERT INTO Factura.DetalleFactura(idFactura, descripcion, montoBase, porcentajeRecargo, motivoRecargo)
+		INSERT INTO Factura.DetalleFactura(idFactura, descripcion, montoBase, idSocioBeneficiario)
 		SELECT
-			nf.idFactura,
+			idFactura,
 			'Cuota',
-			t.valor,
-			CASE
-				WHEN t.fecha > DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 11) THEN 10
-				ELSE 0
-			END,
-			CASE 
-				WHEN t.fecha > DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha), 11) THEN 'Incumplimiento de los plazos de pago.'
-				ELSE NULL
-			END 
-		FROM #tempPagos t
-		JOIN Socio.Socio s ON s.nroSocio = t.nroSocio
-		JOIN #NuevasFacturas nf ON nf.idSocio = s.idSocio AND
-									nf.fechaEmision = DATEFROMPARTS(YEAR(t.fecha), MONTH(t.fecha),1)
+			ROUND(montoTotal / totalIntegrantes, 2),
+			idSocioBeneficiario
+		FROM GrupoFamiliarExpandido gfe
+		WHERE NOT EXISTS (
+			SELECT 1
+			FROM Factura.DetalleFactura df
+			WHERE 
+				df.idFactura = gfe.idFactura
+				AND df.idSocioBeneficiario = gfe.idSocioBeneficiario
+				AND df.descripcion = 'Cuota'
+		);
 		
-
-
 
 		--Genero los pagos asociados a la Facturas nuevas.
+
 		INSERT INTO Pago.Pago(idTransaccion, fecha, monto, idFormaPago, idFactura)
 		SELECT
 			t.idTransaccion,

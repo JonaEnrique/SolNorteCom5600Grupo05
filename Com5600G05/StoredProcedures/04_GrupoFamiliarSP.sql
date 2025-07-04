@@ -19,7 +19,8 @@ GO
 CREATE OR ALTER PROCEDURE Socio.CrearGrupoFamiliar
 	@idSocioTutor INT,
 	@idSocioMenor INT,
-	@parentesco VARCHAR(30)
+	@parentesco VARCHAR(30) = NULL,
+	@idGrupoFamiliar INT OUTPUT
 AS
 BEGIN
 	-- si no lo encontre tiro una excepcion
@@ -89,6 +90,8 @@ BEGIN
 		@idSocioMenor,
 		@parentesco
 	);
+
+	SET @idGrupoFamiliar = SCOPE_IDENTITY();
 END
 GO
 

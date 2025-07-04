@@ -17,21 +17,38 @@
 USE Com5600G05
 GO
 
+CREATE OR ALTER FUNCTION Factura.CalcularEdad (@fechaNacimiento DATE)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @edad INT;
+
+    SET @edad = DATEDIFF(YEAR, @fechaNacimiento, GETDATE()) 
+              - CASE 
+                    WHEN MONTH(GETDATE()) < MONTH(@fechaNacimiento) 
+                         OR (MONTH(GETDATE()) = MONTH(@fechaNacimiento) AND DAY(GETDATE()) < DAY(@fechaNacimiento))
+                    THEN 1 
+                    ELSE 0 
+                END;
+
+    RETURN @edad;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE Factura.ValidarCabeceraFactura
 	@puntoDeVenta   CHAR(4),
 	@tipoFactura    CHAR(1),
 	@fechaEmision   DATE,
-	@idSocio        INT
+	@idPersona        INT
 AS
 BEGIN
 	-- Parámetros imprescindibles
 	IF @puntoDeVenta     IS NULL
 	OR  @tipoFactura     IS NULL
 	OR  @fechaEmision    IS NULL
-	OR  @idSocio         IS NULL
-	BEGIN
-		THROW 51050, 'Faltan parámetros: puntoDeVenta, tipoFactura, fechaEmision o idSocio.', 1;
-	END
+	OR  @idPersona         IS NULL
+		THROW 51050, 'Faltan parámetros: puntoDeVenta, tipoFactura, fechaEmision o idPersona.', 1;
+	
 
 	-- Tipo de factura válido
 	IF @tipoFactura NOT IN ('A','B','C','E','M')
@@ -41,27 +58,17 @@ BEGIN
 	IF @puntoDeVenta NOT LIKE '[0-9][0-9][0-9][0-9]'
 		THROW 51052, 'puntoDeVenta debe ser 4 dígitos numéricos.', 1;
 	
-	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocio)
-		THROW 51053, 'idSocio ingresado no existe', 1;
+	IF NOT EXISTS (SELECT 1 FROM Persona.Persona WHERE idPersona = @idPersona)
+		THROW 51053, 'idPersona ingresado no existe', 1;
 
-	-- Socio existe y es categoría Mayor
-	DECLARE @categoria VARCHAR(50);
-	SELECT 
-		@categoria = c.nombre
-	FROM 
-		Socio.Socio s
-	JOIN 
-		Socio.Categoria c 
-		ON c.idCategoria = s.idCategoria
-	WHERE 
-		s.idSocio = @idSocio;
-
-	IF @categoria <> 'Mayor'
-		THROW 51054, 'El socio debe ser de categoría MAYOR.', 1;
+	
+	IF Factura.CalcularEdad((SELECT fechaNac FROM Persona.Persona WHERE idPersona = @idPersona )) < 18
+		THROW 51054, 'No se puede crear una Factura a alguien que sea MENOR de edad.', 1;
 
 	-- Fecha de emisión no futura
 	IF @fechaEmision > GETDATE()
 		THROW 51055, 'La fecha de emisión no puede ser posterior a hoy.', 1;
+
 END;
 GO
 
@@ -71,7 +78,7 @@ CREATE OR ALTER PROCEDURE Factura.CrearFactura
 	@puntoDeVenta CHAR(4) = '0001',
 	@tipoFactura CHAR(1) = 'C',
 	@fechaEmision DATE = NULL,
-	@idSocio INT,
+	@idPersona INT,
 	@idFactura INT OUTPUT
 AS
 BEGIN
@@ -83,19 +90,19 @@ BEGIN
 		@puntoDeVenta = @puntoDeVenta,
 		@tipoFactura = @tipoFactura,
 		@fechaEmision = @fechaEmision,
-		@idSocio = @idSocio;
+		@idPersona = @idPersona;
 
 	INSERT INTO Factura.Factura (
 		puntoDeVenta,
 		tipoFactura,
 		fechaEmision,
-		idSocio
+		idPersona
 	)
 	VALUES (
 		@puntoDeVenta,
 		@tipoFactura,
 		@fechaEmision,
-		@idSocio
+		@idPersona
 	);
 
 	SET @idFactura = SCOPE_IDENTITY();
@@ -108,7 +115,7 @@ CREATE OR ALTER PROCEDURE Factura.ActualizarCabeceraFactura
 	@puntoDeVenta CHAR(4) = NULL,
 	@tipoFactura CHAR(1) = NULL,
 	@fechaEmision DATE = NULL,
-	@idSocio INT = NULL
+	@idPersona INT = NULL
 
 AS
 BEGIN
@@ -129,7 +136,7 @@ BEGIN
 	IF @puntoDeVenta		IS NULL
 		AND @tipoFactura	IS NULL
 		AND @fechaEmision	IS NULL
-		AND @idSocio		IS NULL
+		AND @idPersona		IS NULL
 			THROW 51059, 'Debe proveer al menos un campo a modificar.', 1;
 	
 
@@ -138,7 +145,7 @@ BEGIN
 		@puntoDeVenta = COALESCE(@puntoDeVenta, puntoDeVenta),
 		@tipoFactura = COALESCE(@tipoFactura, tipoFactura),
 		@fechaEmision = COALESCE(@fechaEmision, fechaEmision),
-		@idSocio = COALESCE(@idSocio, idSocio)
+		@idPersona = COALESCE(@idPersona, idPersona)
 	FROM Factura.Factura
 	WHERE idFactura = @idFactura;
 
@@ -146,7 +153,7 @@ BEGIN
 		@puntoDeVenta = @puntoDeVenta,
 		@tipoFactura = @tipoFactura,
 		@fechaEmision = @fechaEmision,
-		@idSocio = @idSocio;
+		@idPersona = @idPersona;
 	
 
 	--Actualizar
@@ -154,10 +161,10 @@ BEGIN
 	UPDATE Factura.Factura
 	SET
 		puntoDeVenta = @puntoDeVenta,
-		tipoFactura = @tipoFactura,
+		tipoFactura  = @tipoFactura,
 		fechaEmision = @fechaEmision,
-		idSocio = @idSocio
-	WHERE idFactura = @idFactura;
+		idPersona    = @idPersona
+	WHERE idFactura  = @idFactura;
 
 END;
 GO
@@ -249,6 +256,6 @@ BEGIN
 	DELETE FROM Factura.Factura
 	WHERE idFactura = @idFactura;
 
-
 END;
 GO
+

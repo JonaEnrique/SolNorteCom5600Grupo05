@@ -17,6 +17,26 @@
 USE Com5600G05;
 GO
 
+--Funcion para calcular la edad de una persona
+
+CREATE OR ALTER FUNCTION Factura.CalcularEdad (@fechaNacimiento DATE)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @edad INT;
+
+    SET @edad = DATEDIFF(YEAR, @fechaNacimiento, GETDATE()) 
+              - CASE 
+                    WHEN MONTH(GETDATE()) < MONTH(@fechaNacimiento) 
+                         OR (MONTH(GETDATE()) = MONTH(@fechaNacimiento) AND DAY(GETDATE()) < DAY(@fechaNacimiento))
+                    THEN 1 
+                    ELSE 0 
+                END;
+
+    RETURN @edad;
+END;
+GO
+
 --Funcion para obtener el Socio Beneficiario (quien recibe el beneficio de la descripcion.)
 CREATE OR ALTER FUNCTION Factura.ObtenerSocioBeneficiario
 (
@@ -27,7 +47,7 @@ RETURNS DECIMAL(10,2)
 BEGIN
 
 	DECLARE @idSocioDueñoFactura INT;
-	SELECT @idSocioDueñoFactura = idSocio 
+	SELECT @idSocioDueñoFactura = idPersona
 	FROM Factura.Factura 
 	WHERE idFactura = @idFactura;
 
@@ -90,10 +110,11 @@ CREATE OR ALTER PROCEDURE Factura.ObtenerPrecioDetalle
 	@precio				   DECIMAL(10,2) OUTPUT
 AS
 BEGIN
-    DECLARE @precioEncontrado DECIMAL(10,2) = NULL;
 
 	DECLARE @fechaEmisionFactura DATE;
+	SET @precio = NULL;
 	
+
 	SELECT @fechaEmisionFactura = fechaEmision
 	FROM Factura.Factura
 	WHERE idFactura = @idFactura
@@ -109,7 +130,7 @@ BEGIN
          AND a.nombre  = @descripcion
         WHERE ca.fechaVigencia >= @fechaEmisionFactura
         ORDER BY ca.fechaVigencia ASC;
-        SET @precio = @precioEncontrado;
+
     END
 
     -- Precio de cuota
@@ -122,16 +143,55 @@ BEGIN
         WHERE s.idSocio = @idSocioBeneficiario
           AND cc.fechaVigencia >= @fechaEmisionFactura
         ORDER BY cc.fechaVigencia ASC;
-        SET @precio = @precioEncontrado;
     END
 
 	-- Precio Uso Pileta
-	-- Me falta implementar la logica aca, ya que necesito de la tabla InvitacionEvento.
+	IF @descripcion LIKE 'UsoPileta%'
+    BEGIN
+		DECLARE @edadSocio INT, @tipoEdadSocio VARCHAR(20);
+
+		SELECT @edadSocio = Factura.CalcularEdad((SELECT fechaNac FROM Persona.Persona WHERE idPersona = @idSocioBeneficiario));
+		SELECT @tipoEdadSocio = 
+			CASE 
+				WHEN @edadSocio <= 12 THEN 'Menor'
+				ELSE 'Adulto'
+			END;
+		
+
+		IF CHARINDEX('Invitado', @descripcion) > 0
+
+			SELECT TOP 1 @precio = precio
+			FROM Actividad.Tarifa
+			WHERE tipoCliente = 'Invitado' AND tipoDuracion = 'Día' AND 
+				tipoEdad = @tipoEdadSocio AND fechaVigencia >= @fechaEmisionFactura
+			ORDER BY fechaVigencia ASC;
+		ELSE
+			IF CHARINDEX('Socio_Día', @descripcion) > 0
+				SELECT TOP 1 @precio = precio
+				FROM Actividad.Tarifa
+				WHERE tipoCliente = 'Socio' AND tipoDuracion = 'Día' AND 
+					tipoEdad = @tipoEdadSocio AND fechaVigencia >= @fechaEmisionFactura
+				ORDER BY fechaVigencia ASC;
+
+			ELSE IF CHARINDEX('Socio_Mes', @descripcion) > 0
+				SELECT TOP 1 @precio = precio
+				FROM Actividad.Tarifa
+				WHERE tipoCliente = 'Socio' AND tipoDuracion = 'Mes' AND 
+					tipoEdad = @tipoEdadSocio AND fechaVigencia >= @fechaEmisionFactura
+				ORDER BY fechaVigencia ASC;
+
+			ELSE
+				SELECT TOP 1 @precio = precio
+				FROM Actividad.Tarifa
+				WHERE tipoCliente = 'Socio' AND tipoDuracion = 'Temporada' AND 
+					tipoEdad = @tipoEdadSocio AND fechaVigencia >= @fechaEmisionFactura
+				ORDER BY fechaVigencia ASC;
+    END;
 
 	IF @precio IS NULL
 	BEGIN
-		DECLARE @mensajePrecioNoEncontrado VARCHAR(200) = CONCAT('No hay precio definido para', @descripcion, 'en la fecha', @fechaEmisionFactura);
-		THROW 51107, @mensajePrecioNoEncontrado, 1;
+		DECLARE @mensajePrecioNoEncontrado VARCHAR(200) = CONCAT('No hay precio definido para ', @descripcion, ' en la fecha ', @fechaEmisionFactura);
+		THROW 51109, @mensajePrecioNoEncontrado, 1;
 	END;
 END;
 GO
@@ -162,7 +222,7 @@ BEGIN
     BEGIN
         UPDATE Factura.DetalleFactura
         SET 
-            porcentajeDescuento = 0.15,
+            porcentajeDescuento = 15,
             motivoDescuento     = 'Descuento en Cuota por Grupo Familiar'
         WHERE 
             idFactura         = @idFactura 
@@ -184,7 +244,7 @@ BEGIN
     BEGIN
         UPDATE df
         SET
-            porcentajeDescuento = 0.10,
+            porcentajeDescuento = 10,
             motivoDescuento     = 'Descuento por realizar más de una Actividad Deportiva por Socio.'
         FROM Factura.DetalleFactura AS df
         WHERE
@@ -243,7 +303,7 @@ BEGIN
 
 	--Obtengo el idSocio del dueño de la factura.
 	DECLARE @idSocioDueñoFactura INT;
-    SELECT @idSocioDueñoFactura = idSocio
+    SELECT @idSocioDueñoFactura = idPersona
     FROM Factura.Factura
     WHERE idFactura = @idFactura;
 
@@ -254,14 +314,14 @@ BEGIN
 	-------------- Validación descripcion correcta para Socio e Invitado --------------
 	IF NOT EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioBeneficiario) AND @descripcion <> 'UsoPileta:Invitado'
 		THROW 51103, 'No se puede insertar una descripcion para una Factura destinada a un Invitado que no sea: UsoPileta:Invitado', 1;
-	ELSE
-		IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioBeneficiario) AND @descripcion = 'UsoPileta:Invitado'
-			THROW 51104, 'No se puede insertar una descripcion para una Factura destinada a un Socio que sea: UsoPileta:Invitado', 1;
+
+	IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioBeneficiario) AND @descripcion = 'UsoPileta:Invitado'
+		THROW 51104, 'No se puede insertar una descripcion para una Factura destinada a un Socio que sea: UsoPileta:Invitado', 1;
 
 	-------------- Validación de grupo familiar --------------
     
     IF @idSocioBeneficiario <> @idSocioDueñoFactura
-       AND @idSocioBeneficiario <> (
+       AND @idSocioBeneficiario NOT IN (
            SELECT idSocioMenor
              FROM Socio.GrupoFamiliar
             WHERE idSocioTutor = @idSocioDueñoFactura
@@ -270,25 +330,28 @@ BEGIN
               'El idSocioBeneficiario no corresponde a un miembro del grupo familiar del dueño de la factura.', 1;
 	
 
-    -------------- Validación de duplicados por mes/año para Cuota y Actividad--------------
+    -------------- Validación de duplicados por mes/año para Cuota,Actividad y UsoPileta:Socio_Mes--------------
+	
     
 	IF EXISTS (SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioBeneficiario)
 	BEGIN
 		DECLARE 
 			@fechaEmisionFactura DATE,
 			@mes                  INT,
-			@año                  INT;
+			@año                  INT,
+			@dia				  INT;
 
 		SELECT 
 			@fechaEmisionFactura = fechaEmision,
 			@mes                  = MONTH(fechaEmision),
-			@año                  = YEAR(fechaEmision)
-		  FROM Factura.Factura
+			@año                  = YEAR(fechaEmision),
+			@dia				  = DAY(fechaEmision)
+		 FROM Factura.Factura
 		 WHERE idFactura = @idFactura;
 
 		IF @descripcion IN (
 			'Cuota', 'Taekwondo', 'Vóley', 'Futsal',
-			'Natación', 'Baile artístico', 'Ajedrez'
+			'Natación', 'Baile artístico', 'Ajedrez', 'UsoPileta:Socio_Mes'
 		)
 		BEGIN
 			IF EXISTS (
@@ -296,32 +359,81 @@ BEGIN
 				  FROM Factura.Factura f
 				  JOIN Factura.DetalleFactura df 
 					ON f.idFactura = df.idFactura
-				 WHERE df.descripcion            = @descripcion
+				 WHERE df.descripcion           = @descripcion
 				   AND df.idSocioBeneficiario   = @idSocioBeneficiario
 				   AND YEAR(f.fechaEmision)     = @año
 				   AND MONTH(f.fechaEmision)    = @mes
 			)
 			BEGIN
-				DECLARE @mensajeDetalleRepetido VARCHAR(200) = 
+				DECLARE @mensajeDetalleMesAñoRepetido VARCHAR(200) = 
 					CONCAT(
 						'El socio ', @idSocioBeneficiario,
 						' ya tiene "', @descripcion,
 						'" facturado en ', @mes, '/', @año
 					);
-				THROW 51106, @mensajeDetalleRepetido, 1;
+				THROW 51106, @mensajeDetalleMesAñoRepetido, 1;
 			END;
 		END;
+
+		-------------- Validación de duplicados por dia/mes/año para UsoPileta:Socio_Día y UsoPileta:Invitado--------------
+
+		IF @descripcion IN ( 'UsoPileta:Socio_Día', 'UsoPileta:Invitado' )
+		BEGIN
+			IF EXISTS (
+				SELECT 1
+				  FROM Factura.Factura f
+				  JOIN Factura.DetalleFactura df 
+					ON f.idFactura = df.idFactura
+				 WHERE df.descripcion           = @descripcion
+				   AND df.idSocioBeneficiario   = @idSocioBeneficiario
+				   AND YEAR(f.fechaEmision)     = @año
+				   AND MONTH(f.fechaEmision)    = @mes
+				   AND DAY(f.fechaEmision)      = @dia
+			)
+			BEGIN
+				DECLARE @mensajeDetallePiletaDiaRepetido VARCHAR(200) = 
+					CONCAT(
+						'El socio ', @idSocioBeneficiario,
+						' ya tiene "', @descripcion,
+						'" facturado en ', @dia , '/', @mes, '/', @año
+					);
+				THROW 51107, @mensajeDetallePiletaDiaRepetido, 1;
+			END;
+		END;
+		-------------- Validación de duplicados por año para UsoPileta:Socio_Temporada--------------
+
+		IF @descripcion = 'UsoPileta:Socio_Temporada'
+		BEGIN
+			IF EXISTS (
+				SELECT 1
+				  FROM Factura.Factura f
+				  JOIN Factura.DetalleFactura df 
+					ON f.idFactura = df.idFactura
+				 WHERE df.descripcion           = @descripcion
+				   AND df.idSocioBeneficiario   = @idSocioBeneficiario
+				   AND YEAR(f.fechaEmision)     = @año
+			)
+			BEGIN
+				DECLARE @mensajeDetallePiletaTemporadaRepetido VARCHAR(200) = 
+					CONCAT(
+						'El socio ', @idSocioBeneficiario,
+						' ya tiene "', @descripcion,
+						'" facturado en ', @año
+					);
+				THROW 51108, @mensajeDetallePiletaTemporadaRepetido, 1;
+			END;
+		END;
+	
 	END;
- 
 END;
 GO
 
 
---Crear CrearDetalleFacturaCuotaActividad: Solo para Cuotas y Actividades Deportivas.
+--Crear CrearDetalleFacturaCuotaActividad: Solo para Cuotas, Actividades Deportivas y Usos de Pileta.
 
 CREATE OR ALTER PROCEDURE Factura.CrearDetalleFactura
 	@idFactura INT,
-    @descripcion VARCHAR(50),
+    @descripcion VARCHAR(50), 
 	@idSocioBeneficiario INT = NULL
 AS
 BEGIN
@@ -361,7 +473,8 @@ BEGIN
 
 		--------------- Calcular Descuento -----------------------------
 
-		EXEC Factura.CalcularDescuento @idDetalleFactura = @idDetalleInsertado, @descripcion = @descripcion;
+		IF @descripcion NOT LIKE 'UsoPileta%'
+			EXEC Factura.CalcularDescuento @idDetalleFactura = @idDetalleInsertado, @descripcion = @descripcion;
 
 		--------------- Actualizar total factura -----------------------------
 
