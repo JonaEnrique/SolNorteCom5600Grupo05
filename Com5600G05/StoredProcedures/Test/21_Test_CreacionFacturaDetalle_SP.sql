@@ -318,6 +318,7 @@ BEGIN TRY
 
 	DISABLE TRIGGER Factura.NoEliminarNotaDebito ON Factura.NotaDebito;
 
+
     -- 3. Limpieza de datos de prueba
     DELETE FROM Factura.DetalleFactura
 	WHERE idSocioBeneficiario IN (@idSocio);

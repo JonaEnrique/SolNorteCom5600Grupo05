@@ -19,6 +19,7 @@ GO
 
 
 
+
 CREATE OR ALTER PROCEDURE Pago.CrearPago
 	@idTransaccion VARCHAR(64),
 	@fecha DATE,
@@ -59,6 +60,16 @@ BEGIN
 	INSERT INTO Pago.Pago (idTransaccion, fecha, monto, idFormaPago, idFactura)
 	VALUES
 		(@idTransaccion, @fecha, @monto, @idFormaPago, @idFactura);
+	
+	DECLARE @idPago INT = SCOPE_IDENTITY();
+	DECLARE @idSocio INT = (SELECT idPersona FROM Factura.Factura WHERE idFactura = @idFactura);
+	DECLARE @totalFactura DECIMAL(10,2) = (SELECT totalFactura FROM Factura.Factura WHERE idFactura = @idFactura);
+	DECLARE @saldoAFavor DECIMAL(10,2) = @monto - @totalFactura;
+
+
+	IF @monto > @totalFactura
+		EXEC Pago.CrearSaldoCuenta @monto = @saldoAFavor, @idPago = @idPago, @idSocio = @idSocio;
+
 END;
 GO
 

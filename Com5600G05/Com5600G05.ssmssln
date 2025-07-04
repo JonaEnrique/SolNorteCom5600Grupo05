@@ -1,17 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# SQL Server Management Studio Solution File, Format Version 19.00
+# SQL Server Management Studio Solution File, Format Version 20.00
 VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scritps", "Scritps", "{80CFE0A1-E182-48B3-91AA-A26FFF8BBB9E}"
 	ProjectSection(SolutionItems) = preProject
 		Scripts\00_CreacionTablas.sql = Scripts\00_CreacionTablas.sql
+		..\..\SolNorteCom5600Grupo05-main\Com5600G05\Scripts\01_InsercionDatosBasicos.sql = ..\..\SolNorteCom5600Grupo05-main\Com5600G05\Scripts\01_InsercionDatosBasicos.sql
 		Scripts\02_Preimportaciones.sql = Scripts\02_Preimportaciones.sql
-		Scripts\04_LoteDePrueba.sql = Scripts\04_LoteDePrueba.sql
-		Scripts\06_SPImportaciones.sql = Scripts\06_SPImportaciones.sql
-		Scripts\07_EjecucionImportaciones.sql = Scripts\07_EjecucionImportaciones.sql
-		Scripts\08_Reportes.sql = Scripts\08_Reportes.sql
-		Scripts\09_Seguridad(Entrega7).sql = Scripts\09_Seguridad(Entrega7).sql
+		Scripts\03_SPImportaciones.sql = Scripts\03_SPImportaciones.sql
+		Scripts\04_EjecucionImportaciones.sql = Scripts\04_EjecucionImportaciones.sql
+		Scripts\06_Reportes.sql = Scripts\06_Reportes.sql
+		Scripts\07_Seguridad(Entrega7).sql = Scripts\07_Seguridad(Entrega7).sql
+		Scripts\08_LoteDePrueba.sql = Scripts\08_LoteDePrueba.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredProcedures", "{1BF6DB2F-7827-45C5-B51E-89F14122E07E}"
@@ -36,10 +37,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredP
 		StoredProcedures\18_InvitacionEventoSP.sql = StoredProcedures\18_InvitacionEventoSP.sql
 		StoredProcedures\19_FacturaSP.sql = StoredProcedures\19_FacturaSP.sql
 		StoredProcedures\20_DetalleFacturaSP.sql = StoredProcedures\20_DetalleFacturaSP.sql
-		StoredProcedures\21_FormaDePagoSP.sql = StoredProcedures\21_FormaDePagoSP.sql
-		StoredProcedures\22_NotaDeCreditoSP.sql = StoredProcedures\22_NotaDeCreditoSP.sql
-		StoredProcedures\23_NotaDeDebitoSP.sql = StoredProcedures\23_NotaDeDebitoSP.sql
-		StoredProcedures\24_PagoSP.sql = StoredProcedures\24_PagoSP.sql
+		StoredProcedures\21_CreacionFacturaConDetalleSP.sql = StoredProcedures\21_CreacionFacturaConDetalleSP.sql
+		StoredProcedures\22_FormaDePagoSP.sql = StoredProcedures\22_FormaDePagoSP.sql
+		StoredProcedures\23_NotaDeCreditoSP.sql = StoredProcedures\23_NotaDeCreditoSP.sql
+		StoredProcedures\24_NotaDeDebitoSP.sql = StoredProcedures\24_NotaDeDebitoSP.sql
+		StoredProcedures\25_PagoSP.sql = StoredProcedures\25_PagoSP.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5F68-4F6C-92D7-986988F78710}"
@@ -49,7 +51,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5
 		StoredProcedures\Test\03_Test_Obra_Social_SP.sql = StoredProcedures\Test\03_Test_Obra_Social_SP.sql
 		StoredProcedures\Test\04_Test_Grupo_Familiar_SP.sql = StoredProcedures\Test\04_Test_Grupo_Familiar_SP.sql
 		StoredProcedures\Test\05_Test_Costo_Categoria_SP.sql = StoredProcedures\Test\05_Test_Costo_Categoria_SP.sql
-		StoredProcedures\Test\05A_Test_Categoria_Costo_SP.sql = StoredProcedures\Test\05A_Test_Categoria_Costo_SP.sql
 		StoredProcedures\Test\06_Test_Actividad_Deportiva_SP.sql = StoredProcedures\Test\06_Test_Actividad_Deportiva_SP.sql
 		StoredProcedures\Test\07_Test_Costo_Actividad_Deportiva_SP.sql = StoredProcedures\Test\07_Test_Costo_Actividad_Deportiva_SP.sql
 		StoredProcedures\Test\08_Test_Socio_SP.sql = StoredProcedures\Test\08_Test_Socio_SP.sql
@@ -60,17 +61,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5
 		StoredProcedures\Test\13_Test_Asistencia_SP.sql = StoredProcedures\Test\13_Test_Asistencia_SP.sql
 		StoredProcedures\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql = StoredProcedures\Test\14_Test_Socio_Realiza_Actividad_Deportiva_SP.sql
 		StoredProcedures\Test\19_Test_Factura_SP.sql = StoredProcedures\Test\19_Test_Factura_SP.sql
-		StoredProcedures\Test\20_Test_DetalleFactura_SP.sql = StoredProcedures\Test\20_Test_DetalleFactura_SP.sql
+		StoredProcedures\Test\21_Test_CreacionFacturaDetalle_SP.sql = StoredProcedures\Test\21_Test_CreacionFacturaDetalle_SP.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Seguridad", "Seguridad", "{D9028B33-9E98-4512-B08A-A40E1791120B}"
-	ProjectSection(SolutionItems) = preProject
-		Seguridad\01_AsignacionDeRolesSP.sql = Seguridad\01_AsignacionDeRolesSP.sql
-		Seguridad\02_CreacionDeRolesYAsignacionDePermisos.sql = Seguridad\02_CreacionDeRolesYAsignacionDePermisos.sql
-		Seguridad\03_CreacionDeLoginYUsuarios.sql = Seguridad\03_CreacionDeLoginYUsuarios.sql
-		Seguridad\04_DemostracionRoles.sql = Seguridad\04_DemostracionRoles.sql
-		Seguridad\05_TestsUsuarios.sql = Seguridad\05_TestsUsuarios.sql
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "View", "View", "{8B480B94-6600-4F7D-8DD2-D70DB44CC048}"
 	ProjectSection(SolutionItems) = preProject
@@ -84,7 +78,7 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DD3C6B65-262A-4601-BD4D-E943CD456242}.Default|Default.ActiveCfg = Default
+		{D4498DE8-0733-42E9-8D52-629F62BB1927}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

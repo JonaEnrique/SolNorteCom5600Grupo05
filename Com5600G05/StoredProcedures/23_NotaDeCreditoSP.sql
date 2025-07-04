@@ -166,7 +166,7 @@ BEGIN
 		SET estado = 'Cancelada'
 		WHERE idFactura = @idFactura;
 	END;
-	ELSE IF @tipoNC = 'AnulacionParcial'
+	IF @tipoNC = 'AnulacionParcial'
 	BEGIN
 		-- Si la factura quedó en 0 tras la NC parcial
 		IF Factura.ObtenerTotal(@idFactura) = 0
@@ -180,7 +180,6 @@ END
 GO
 
 
-
 CREATE OR ALTER TRIGGER Factura.NoModificarNotaCredito
 ON Factura.DetalleFactura
 INSTEAD OF UPDATE, DELETE
@@ -189,3 +188,4 @@ BEGIN;
 	THROW 51211, 'No está permitido modificar/eliminar notas de credito ya emitidas.', 1;
 END;
 GO
+

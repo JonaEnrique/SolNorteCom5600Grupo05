@@ -622,7 +622,7 @@ GO
 CREATE TABLE Pago.SaldoDeCuenta (
 	idSaldoDeCuenta	 INT IDENTITY(1,1) PRIMARY KEY,
 	monto			 DECIMAL(10, 2) NOT NULL,
-	aplicado		 BIT,
+	aplicado		 BIT DEFAULT 0,
 
 	idPago			 INT NOT NULL,
 	idSocio			 INT NOT NULL,
