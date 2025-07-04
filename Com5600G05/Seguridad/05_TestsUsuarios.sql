@@ -18,3 +18,4 @@ EXEC Seguridad.QuitarRolAdministrativoDeFacturacion @usuario = 'UsuarioAdministr
 EXEC Seguridad.AsignarRolSecretario @usuario = 'UsuarioSecretario';
 -- Quitar rol secretario
 EXEC Seguridad.QuitarRolSecretario @usuario = 'UsuarioSecretario';
+

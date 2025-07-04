@@ -43,12 +43,6 @@ WHERE NOT EXISTS (
 GO
 
 
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.tables
-    WHERE name = 'Empleado'
-      AND schema_id = SCHEMA_ID('dbo')
-)
 
 
 
@@ -212,6 +206,8 @@ GO
 
 
 
+
+
 CREATE OR ALTER PROCEDURE Persona.InsertarEmpleado
 	@legajo VARCHAR(20),
 	@nombre VARCHAR(50),
@@ -269,6 +265,7 @@ BEGIN
 	END CATCH
 END;
 GO
+
 
 
 CREATE OR ALTER PROCEDURE Persona.ActualizarEmpleado
@@ -330,6 +327,9 @@ BEGIN
 END;
 GO
 
+
+
+exec Persona.ObtenerEmpleados
 
 CREATE OR ALTER PROCEDURE Persona.ObtenerEmpleados
 AS

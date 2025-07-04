@@ -73,7 +73,6 @@ GO
 CREATE SCHEMA Reporte;
 GO
 
-
 DROP SCHEMA IF EXISTS Seguridad;
 GO
 CREATE SCHEMA Seguridad;

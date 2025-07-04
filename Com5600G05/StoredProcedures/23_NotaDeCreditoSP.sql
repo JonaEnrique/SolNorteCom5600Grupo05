@@ -181,8 +181,10 @@ GO
 
 
 
+DISABLE TRIGGER Factura.NoModificarNotaCredito ON 
+
 CREATE OR ALTER TRIGGER Factura.NoModificarNotaCredito
-ON Factura.DetalleFactura
+ON Factura.NotaCredito
 INSTEAD OF UPDATE, DELETE
 AS
 BEGIN;
