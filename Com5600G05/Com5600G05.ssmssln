@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# SQL Server Management Studio Solution File, Format Version 20.00
+# SQL Server Management Studio Solution File, Format Version 19.00
 VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scritps", "Scritps", "{80CFE0A1-E182-48B3-91AA-A26FFF8BBB9E}"
@@ -64,6 +64,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TEST", "TEST", "{28CD4239-5
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Seguridad", "Seguridad", "{D9028B33-9E98-4512-B08A-A40E1791120B}"
+	ProjectSection(SolutionItems) = preProject
+		Seguridad\01_AsignacionDeRolesSP.sql = Seguridad\01_AsignacionDeRolesSP.sql
+		Seguridad\02_CreacionDeRolesYAsignacionDePermisos.sql = Seguridad\02_CreacionDeRolesYAsignacionDePermisos.sql
+		Seguridad\03_CreacionDeLoginYUsuarios.sql = Seguridad\03_CreacionDeLoginYUsuarios.sql
+		Seguridad\04_DemostracionRoles.sql = Seguridad\04_DemostracionRoles.sql
+		Seguridad\05_TestsUsuarios.sql = Seguridad\05_TestsUsuarios.sql
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "View", "View", "{8B480B94-6600-4F7D-8DD2-D70DB44CC048}"
 	ProjectSection(SolutionItems) = preProject
@@ -77,7 +84,7 @@ Global
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{68DA57BF-94C1-425C-80A9-670447647508}.Default|Default.ActiveCfg = Default
+		{DD3C6B65-262A-4601-BD4D-E943CD456242}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
