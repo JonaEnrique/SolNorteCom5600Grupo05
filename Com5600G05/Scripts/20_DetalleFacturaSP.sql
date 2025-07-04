@@ -91,7 +91,7 @@ BEGIN
 
 	SELECT
 		  @idFactura = idFactura,
-		  @montoFinal = CASE WHEN @esSuma = 1 THEN montoFinal ELSE -montoFinal END
+		  @montoFinal = CASE WHEN @esSuma = 1 THEN montoFinalConIVA ELSE -montoFinalConIVA END
 	FROM Factura.DetalleFactura 
 	WHERE idDetalleFactura = @idDetalle;
 
@@ -158,8 +158,7 @@ BEGIN
 			END;
 		
 
-
-		IF @descripcion = 'UsoPileta:Día' AND NOT EXISTS( SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioBeneficiario)
+		IF CHARINDEX('Día', @descripcion) > 0 AND NOT EXISTS( SELECT 1 FROM Socio.Socio WHERE idSocio = @idSocioBeneficiario)
 			SELECT TOP 1 @precio = precio
 			FROM Actividad.Tarifa
 			WHERE tipoCliente = 'Invitado' AND tipoDuracion = 'Día' AND 
@@ -172,14 +171,14 @@ BEGIN
 				tipoEdad = @tipoEdadSocio AND fechaVigencia >= @fechaEmisionFactura
 			ORDER BY fechaVigencia ASC;
 
-		IF @descripcion = 'UsoPileta:Mes'
+		IF CHARINDEX('Mes', @descripcion) > 0
 			SELECT TOP 1 @precio = precio
 			FROM Actividad.Tarifa
 			WHERE tipoCliente = 'Socio' AND tipoDuracion = 'Mes' AND 
 				tipoEdad = @tipoEdadSocio AND fechaVigencia >= @fechaEmisionFactura
 			ORDER BY fechaVigencia ASC;
 
-		IF @descripcion = 'UsoPileta:Temporada'
+		ELSE
 			SELECT TOP 1 @precio = precio
 			FROM Actividad.Tarifa
 			WHERE tipoCliente = 'Socio' AND tipoDuracion = 'Temporada' AND 
@@ -606,7 +605,7 @@ BEGIN
 	--------------- Obtener precio que sera eliminado -----------------------------
 	DECLARE @precioEliminado DECIMAL(10,2);
 
-	SELECT @precioEliminado = montoFinal
+	SELECT @precioEliminado = montoFinalConIVA
 	FROM Factura.DetalleFactura
 	WHERE idDetalleFactura = @idDetalle
 
